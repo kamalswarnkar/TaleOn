@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Room - TaleOn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="game-room.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Tale<span>On</span> Game</h1>
+        <p class="room-code">Room Code: <span id="roomCode">----</span></p>
+
+        <div class="story-feed" id="storyFeed">
+            <!-- Story turns will appear here -->
+        </div>
+
+        <div class="turn-info">
+            <p>Current Turn: <span id="currentPlayer">----</span></p>
+            <p>Time Left: <span id="timer">--</span> min</p>
+        </div>
+
+        <div class="turn-input" id="turnInputArea">
+            <textarea id="storyInput" placeholder="Write your part of the story..."></textarea>
+            <button onclick="submitTurn()">Submit</button>
+        </div>
+    </div>
+
+    <script src="game-room.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toss - TaleOn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="toss.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Who Starts?</h1>
+
+        <div class="coin" id="coin"></div>
+        <button class="toss-btn" onclick="startToss()">Flip Coin</button>
+
+        <div id="resultBox" class="hidden">
+            <p id="resultText"></p>
+            <button onclick="goToGame()">Go to Game</button>
+        </div>
+    </div>
+
+    <script src="toss.js"></script>
+</body>
+</html>

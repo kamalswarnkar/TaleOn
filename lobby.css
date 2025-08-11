@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #0a0a0a;
+    color: #fff;
+    text-align: center;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    padding: 40px;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 2px;
+    color: #00c3ff;
+    text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;
+}
+
+.title span {
+    color: #ff006f;
+    text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;
+}
+
+.room-code {
+    font-size: 1.2rem;
+    margin: 10px 0 30px 0;
+    color: #ccc;
+}
+
+.room-code span {
+    color: #ff006f;
+    text-shadow: 0 0 8px #ff006f;
+}
+
+.section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #00c3ff;
+    text-shadow: 0 0 5px #00c3ff;
+}
+
+.player-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto 30px auto;
+    max-width: 300px;
+}
+
+.player-list li {
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #00c3ff;
+    box-shadow: 0 0 5px #00c3ff;
+}
+
+.lobby-buttons button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#startGameBtn {
+    background-color: #00c3ff;
+    color: #000;
+}
+
+#startGameBtn:hover {
+    box-shadow: 0 0 15px #00c3ff, 0 0 25px #00c3ff;
+}
+
+.lobby-buttons button:nth-child(2) {
+    background-color: #ff006f;
+    color: #fff;
+}
+
+.lobby-buttons button:nth-child(2):hover {
+    box-shadow: 0 0 15px #ff006f, 0 0 25px #ff006f;
+}

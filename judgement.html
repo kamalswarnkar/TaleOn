@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Judgement - TaleOn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="judgement.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">AI <span>Judgement</span></h1>
+
+        <div class="verdict-box" id="verdictBox">
+            <h2 id="verdictText">Analysing...</h2>
+        </div>
+
+        <div class="criteria">
+            <p><strong>Flow:</strong> <span id="flowScore">--</span></p>
+            <p><strong>Creativity:</strong> <span id="creativityScore">--</span></p>
+            <p><strong>Vibe:</strong> <span id="vibeScore">--</span></p>
+            <p><strong>Immersion:</strong> <span id="immersionScore">--</span></p>
+        </div>
+
+        <div class="story-review">
+            <h3>Final Story</h3>
+            <div id="storyContent"></div>
+        </div>
+
+        <button onclick="goToRoast()">Continue to Roast</button>
+    </div>
+
+    <script src="judgement.js"></script>
+</body>
+</html>

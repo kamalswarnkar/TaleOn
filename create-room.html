@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Room - TaleOn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="create-room.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Create <span>Room</span></h1>
+
+        <div class="form-group">
+            <label for="playerName">Your Name</label>
+            <input type="text" id="playerName" placeholder="Enter your name">
+        </div>
+
+        <div class="form-group">
+            <label for="maxPlayers">Max Players</label>
+            <input type="number" id="maxPlayers" min="1" max="10" value="4">
+        </div>
+
+        <div class="form-group">
+            <label for="turnTime">Turn Time (minutes)</label>
+            <input type="number" id="turnTime" min="1" max="15" value="10">
+        </div>
+
+        <div class="form-group">
+            <label for="aiName">AI Name</label>
+            <input type="text" id="aiName" placeholder="Enter AI name (optional)">
+        </div>
+
+        <button class="create-btn" onclick="generateRoom()">Generate Room</button>
+
+        <div id="roomCodeBox" class="hidden">
+            <p>Your Room Code:</p>
+            <h2 id="roomCode"></h2>
+            <button onclick="goLobby()">Go to Lobby</button>
+        </div>
+    </div>
+
+    <script src="create-room.js"></script>
+</body>
+</html>

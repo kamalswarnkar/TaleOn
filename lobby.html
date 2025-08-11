@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby - TaleOn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lobby.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Game <span>Lobby</span></h1>
+        <p class="room-code">Room Code: <span id="roomCode">----</span></p>
+
+        <h2 class="section-title">Players</h2>
+        <ul id="playerList" class="player-list">
+            <!-- Players will appear here -->
+        </ul>
+
+        <div class="lobby-buttons">
+            <button id="startGameBtn" onclick="startGame()">Start Game</button>
+            <button onclick="leaveLobby()">Leave Lobby</button>
+        </div>
+    </div>
+
+    <script src="lobby.js"></script>
+</body>
+</html>

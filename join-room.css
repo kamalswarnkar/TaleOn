@@ -1,0 +1,99 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #0a0a0a;
+    color: #fff;
+    text-align: center;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+    padding: 40px;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 2px;
+    color: #00c3ff;
+    text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;
+}
+
+.title span {
+    color: #ff006f;
+    text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;
+}
+
+.form-group {
+    margin: 20px 0;
+    text-align: left;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #ccc;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #00c3ff;
+    background: transparent;
+    color: #fff;
+    font-size: 1rem;
+    border-radius: 5px;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+}
+
+input:focus {
+    border-color: #ff006f;
+    box-shadow: 0 0 10px #ff006f;
+}
+
+.join-btn, .back-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    padding: 10px 20px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.join-btn {
+    background-color: #00c3ff;
+    color: #000;
+}
+
+.join-btn:hover {
+    box-shadow: 0 0 15px #00c3ff, 0 0 25px #00c3ff;
+}
+
+.back-btn {
+    background-color: #ff006f;
+    color: #fff;
+    margin-left: 10px;
+}
+
+.back-btn:hover {
+    box-shadow: 0 0 15px #ff006f, 0 0 25px #ff006f;
+}
+
+/* Autofill fix for dark mode inputs */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+    -webkit-text-fill-color: #fff !important;
+    border: 2px solid #00c3ff !important;
+    caret-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+input:-webkit-autofill:focus {
+    border: 2px solid #ff006f !important;
+    -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset, 0 0 10px #ff006f !important;
+}
