@@ -5,22 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaleOn</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="landing.css">
-</head>
-<body>
-    <div class="container">
-        <h1 class="title">Tale<span>On</span></h1>
-        <p class="tagline">Keep the tale going… or get roasted together!</p>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+        extend: {
+            fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+            }
+        }
+        }
+    }
+    </script>
 
-        <div class="buttons">
-            <button onclick="createRoom()">Create Room</button>
-            <button onclick="joinRoom()">Join Room</button>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center">
+    <div class="max-w-[700px] mx-auto p-10">
+        
+        <!-- Title -->
+        <h1 class="font-[Orbitron] text-[3.5rem] tracking-[2px] text-[#00c3ff]" style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+            Tale
+            <span class="text-[#ff006f]" style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;">On</span>
+        </h1>
+
+        <!-- Tagline -->
+        <p class="text-lg mt-2 text-[#ccc]">Keep the tale going… or get roasted together!</p>
+
+        <!-- Buttons -->
+        <div class="my-10">
+            <button onclick="createRoom()" class="font-[Orbitron] text-lg px-6 py-3 m-2 border-2 border-[#00c3ff] rounded-md bg-transparent text-white hover:bg-[#00c3ff] hover:text-black transition duration-300 drop-shadow-none hover:drop-shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+                Create Room
+            </button>
+            <button onclick="joinRoom()" class="font-[Orbitron] text-lg px-6 py-3 m-2 border-2 border-[#00c3ff] rounded-md bg-transparent text-white hover:bg-[#00c3ff] hover:text-black transition duration-300 drop-shadow-none hover:drop-shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+                Join Room
+            </button>
         </div>
 
-        <div class="how-it-works">
-            <h2>How It Works</h2>
-            <p>Take turns writing a story with friends and AI. No genre rules — just keep it flowing! 
-            At the end, AI decides if you all win… or if it roasts you mercilessly.</p>
+        <!-- How it works -->
+        <div class="mt-12">
+            <h2 class="font-[Orbitron] text-[#ff006f] drop-shadow-[0_0_10px_#ff006f]">How It Works</h2>
+            <p class="text-[#aaa] leading-relaxed mt-2">
+                Take turns writing a story with friends and AI. No genre rules — just keep it flowing!
+                At the end, AI decides if you all win… or if it roasts you mercilessly.
+            </p>
         </div>
     </div>
 

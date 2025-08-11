@@ -5,41 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Room - TaleOn</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="create-room.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    /* Autofill fix for dark mode inputs */
+    input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+        -webkit-text-fill-color: #fff !important;
+        border: 2px solid #00c3ff !important;
+        caret-color: #fff !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+
+    input:-webkit-autofill:focus {
+        border: 2px solid #ff006f !important;
+        -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset, 0 0 10px #ff006f !important;
+    }
+    </style>
+
 </head>
-<body>
-    <div class="container">
-        <h1 class="title">Create <span>Room</span></h1>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center">
+    <div class="max-w-[500px] mx-auto p-10">
 
-        <div class="form-group">
-            <label for="playerName">Your Name</label>
-            <input type="text" id="playerName" placeholder="Enter your name">
+        <!-- Title -->
+        <h1 class="font-[Orbitron] text-[2.8rem] tracking-[2px] text-[#00c3ff]" 
+            style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+            Create <span class="text-[#ff006f]" style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;">Room</span>
+        </h1>
+
+        <!-- Form Groups -->
+        <div class="my-5 text-left">
+            <label for="playerName" class="block font-bold mb-1 text-[#ccc]">Your Name</label>
+            <input type="text" id="playerName" placeholder="Enter your name"
+                class="w-full p-2 border-2 border-[#00c3ff] bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]">
         </div>
 
-        <div class="form-group">
-            <label for="maxPlayers">Max Players</label>
-            <input type="number" id="maxPlayers" min="1" max="10" value="4">
+        <div class="my-5 text-left">
+            <label for="maxPlayers" class="block font-bold mb-1 text-[#ccc]">Max Players</label>
+            <input type="number" id="maxPlayers" min="1" max="10" value="4"
+                class="w-full p-2 border-2 border-[#00c3ff] bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]">
         </div>
 
-        <div class="form-group">
-            <label for="turnTime">Turn Time (minutes)</label>
-            <input type="number" id="turnTime" min="1" max="15" value="10">
+        <div class="my-5 text-left">
+            <label for="turnTime" class="block font-bold mb-1 text-[#ccc]">Turn Time (minutes)</label>
+            <input type="number" id="turnTime" min="1" max="15" value="10"
+                class="w-full p-2 border-2 border-[#00c3ff] bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]">
         </div>
 
-        <div class="form-group">
-            <label for="aiName">AI Name</label>
-            <input type="text" id="aiName" placeholder="Enter AI name (optional)">
+        <div class="my-5 text-left">
+            <label for="aiName" class="block font-bold mb-1 text-[#ccc]">AI Name</label>
+            <input type="text" id="aiName" placeholder="Enter AI name (optional)"
+                class="w-full p-2 border-2 border-[#00c3ff] bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]">
         </div>
 
-        <button class="create-btn" onclick="generateRoom()">Generate Room</button>
+        <!-- Create Button -->
+        <button onclick="generateRoom()" 
+            class="font-[Orbitron] text-base px-5 py-2 mt-5 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+            Generate Room
+        </button>
 
-        <div id="roomCodeBox" class="hidden">
+        <!-- Room Code Box -->
+        <div id="roomCodeBox" class="hidden mt-8">
             <p>Your Room Code:</p>
-            <h2 id="roomCode"></h2>
-            <button onclick="goLobby()">Go to Lobby</button>
+            <h2 id="roomCode" class="text-[#ff006f] text-2xl" 
+                style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;"></h2>
+            <button onclick="goLobby()" 
+                class="font-[Orbitron] text-base px-5 py-2 mt-3 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+                Go to Lobby
+            </button>
         </div>
     </div>
 
-    <script src="create-room.js"></script>
+    <script>
+        function generateRoom() {
+            const playerName = document.getElementById("playerName").value.trim();
+            if (!playerName) {
+                alert("Please enter your name!");
+                return;
+            }
+            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById("roomCode").textContent = roomCode;
+            document.getElementById("roomCodeBox").classList.remove("hidden");
+        }
+
+        function goLobby() {
+            alert("Redirecting to Lobby...");
+            window.location.href = "lobby.html";
+        }
+    </script>
 </body>
 </html>
