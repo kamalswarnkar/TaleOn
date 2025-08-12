@@ -7,6 +7,8 @@ let currentTurnIndex = 0;
 let turnTime = parseInt(sessionStorage.getItem("turnTime")) || 10; // in minutes
 let timer;
 let story = [];
+let maxRounds = parseInt(sessionStorage.getItem("maxRounds")) || 5; // configurable
+let currentRound = 1;
 
 // Display Room Code
 document.getElementById("roomCode").textContent = sessionStorage.getItem("roomCode") || "ABCD12";
@@ -78,6 +80,17 @@ function renderStory() {
 
 function nextTurn() {
     clearInterval(timer);
+
+    if (currentTurnIndex === players.length - 1) {
+        currentRound++;
+    }
+
+    if (currentRound > maxRounds) {
+        sessionStorage.setItem("story", JSON.stringify(story));
+        window.location.href = "judgement.html";
+        return;
+    }
+
     currentTurnIndex = (currentTurnIndex + 1) % players.length;
 
     // If all players had a turn, you can decide to end game here or continue

@@ -18,7 +18,6 @@
         }
     }
     </script>
-
 </head>
 <body class="bg-[#0a0a0a] text-white font-[Inter] text-center">
     <div class="max-w-[700px] mx-auto p-10">
@@ -33,12 +32,15 @@
         <p class="text-lg mt-2 text-[#ccc]">Keep the tale going… or get roasted together!</p>
 
         <!-- Buttons -->
-        <div class="my-10">
+        <div class="my-10 flex flex-col sm:flex-row justify-center items-center">
             <button onclick="createRoom()" class="font-[Orbitron] text-lg px-6 py-3 m-2 border-2 border-[#00c3ff] rounded-md bg-transparent text-white hover:bg-[#00c3ff] hover:text-black transition duration-300 drop-shadow-none hover:drop-shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
                 Create Room
             </button>
             <button onclick="joinRoom()" class="font-[Orbitron] text-lg px-6 py-3 m-2 border-2 border-[#00c3ff] rounded-md bg-transparent text-white hover:bg-[#00c3ff] hover:text-black transition duration-300 drop-shadow-none hover:drop-shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
                 Join Room
+            </button>
+            <button onclick="goArchive()" class="font-[Orbitron] text-lg px-6 py-3 m-2 border-2 border-[#ff006f] rounded-md bg-transparent text-white hover:bg-[#ff006f] hover:text-black transition duration-300 drop-shadow-none hover:drop-shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]">
+                View Archive
             </button>
         </div>
 
@@ -52,6 +54,26 @@
         </div>
     </div>
 
-    <script src="landing.js"></script>
+    <script>
+        // Redirects
+        function createRoom() {
+            window.location.href = "create-room.html";
+        }
+
+        function joinRoom() {
+            window.location.href = "join-room.html";
+        }
+
+        function goArchive() {
+            window.location.href = "archive.html";
+        }
+
+        // Error handling hook: If redirected here with error message
+        const errorMessage = sessionStorage.getItem("errorMessage");
+        if (errorMessage) {
+            alert(errorMessage);
+            sessionStorage.removeItem("errorMessage");
+        }
+    </script>
 </body>
 </html>

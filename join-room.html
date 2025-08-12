@@ -67,10 +67,18 @@
         return;
       }
 
+      // Store details
       sessionStorage.setItem("playerName", name);
       sessionStorage.setItem("roomCode", code);
 
-      alert(`Joining room ${code}...`);
+      // Simulate validation — later replace with backend check
+      const validRoom = true; // placeholder
+      if (!validRoom) {
+        sessionStorage.setItem("errorMessage", "Invalid room code or room no longer exists.");
+        window.location.href = "error.html";
+        return;
+      }
+
       window.location.href = "lobby.html";
     }
 
