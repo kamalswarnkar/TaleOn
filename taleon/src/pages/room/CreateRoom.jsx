@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const CreateRoom = () => {
   const navigate = useNavigate();
@@ -7,20 +8,52 @@ const CreateRoom = () => {
   const [maxRounds, setMaxRounds] = useState("");
   const [turnTime, setTurnTime] = useState("");
 
-  const createRoom = () => {
+  const createRoom = async () => {
     if (!playerName.trim() || !maxRounds.trim() || !turnTime.trim()) {
       alert("Please fill in all fields!");
       return;
     }
 
-    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    if (!user?.token) {
+      alert("You must be logged in to create a room.");
+      navigate("/login");
+      return;
+    }
 
-    sessionStorage.setItem("playerName", playerName);
-    sessionStorage.setItem("maxRounds", maxRounds);
-    sessionStorage.setItem("turnTime", turnTime);
-    sessionStorage.setItem("roomCode", roomCode);
+    try {
+      // ✅ send playerName, turnTime, maxRounds
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/create`,
+        {
+          playerName: playerName.trim(),
+          maxRounds: Number(maxRounds),
+          turnTime: Number(turnTime),
+        },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
 
-    navigate("/lobby");
+      const room = res.data.room || {};
+      const roomCode = room.roomCode || res.data.roomCode;
+
+      // store values locally for UI flow
+      sessionStorage.setItem("playerName", playerName.trim());
+      sessionStorage.setItem("maxRounds", maxRounds);
+      sessionStorage.setItem("turnTime", turnTime);
+      sessionStorage.setItem("roomCode", roomCode);
+
+      if (room.players) {
+        sessionStorage.setItem("players", JSON.stringify(room.players));
+      }
+
+      navigate("/lobby");
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.message || "Failed to create room";
+      alert(msg);
+    }
   };
 
   const goBack = () => {

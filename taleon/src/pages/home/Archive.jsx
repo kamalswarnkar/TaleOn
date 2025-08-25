@@ -1,35 +1,54 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Archive = () => {
   const navigate = useNavigate();
   const [archives, setArchives] = useState([]);
   const [filtered, setFiltered] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load archive data (mock/localStorage)
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("archives")) || [
-      {
-        id: 1,
-        date: "2025-08-14",
-        verdict: "WIN",
-        story: [
-          { player: "Player_1", text: "Once upon a time..." },
-          { player: "AI_Buddy", text: "A ghost appeared and laughed..." },
-        ],
-      },
-      {
-        id: 2,
-        date: "2025-08-12",
-        verdict: "LOSE",
-        story: [
-          { player: "Player_2", text: "We went to Mars..." },
-          { player: "AI_Buddy", text: "But forgot to bring oxygen." },
-        ],
-      },
-    ];
-    setArchives(stored);
-    setFiltered(stored);
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+
+    const fetchArchives = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/archive`,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+
+        const games = (res.data.archives || []).map((g) => {
+          // Ensure we have a proper verdict - only show PENDING if no verdict exists
+          const verdict = g.verdict && g.verdict !== "PENDING" ? g.verdict : "PENDING";
+          
+          const story = (g.story || []).map((s) => ({
+            player:
+              typeof s.player === "object"
+                ? s.player.username || s.player.name || "Player"
+                : s.player,
+            text: s.text || "",
+          }));
+
+          return {
+            ...g,
+            verdict,
+            story,
+          };
+        });
+
+        setArchives(games);
+        setFiltered(games);
+      } catch (err) {
+        console.error("Archive fetch failed:", err);
+        setArchives([]);
+        setFiltered([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArchives();
   }, []);
 
   const filterStories = (type) => {
@@ -54,7 +73,6 @@ const Archive = () => {
           </span>
         </h1>
 
-        {/* Subtitle */}
         <p className="text-[#ccc] italic mb-5">
           Relive your wins, your losses, and the chaos in between.
         </p>
@@ -81,9 +99,11 @@ const Archive = () => {
           </button>
         </div>
 
-        {/* Outer Blue Glowing Container */}
+        {/* Archive List */}
         <div className="bg-white/5 p-4 rounded-lg border border-[#00c3ff] shadow-[0_0_10px_#00c3ff] max-h-[500px] overflow-y-auto">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <p className="text-[#aaa] italic">Loading past chaos...</p>
+          ) : filtered.length === 0 ? (
             <p className="text-[#ccc] italic">No matching games found.</p>
           ) : (
             <div className="space-y-4 text-left">
@@ -93,19 +113,21 @@ const Archive = () => {
                   className={`p-4 rounded-lg border bg-white/5 transition duration-300 ${
                     game.verdict === "WIN"
                       ? "border-[#00ff9f] shadow-[0_0_10px_#00ff9f]"
-                      : "border-[#ff003c] shadow-[0_0_10px_#ff003c]"
+                      : game.verdict === "LOSE"
+                      ? "border-[#ff003c] shadow-[0_0_10px_#ff003c]"
+                      : "border-[#00c3ff] shadow-[0_0_10px_#00c3ff]"
                   }`}
                 >
                   {/* Header */}
                   <div className="flex justify-between mb-2">
-                    <span className="text-sm text-[#ccc]">
-                      #{game.id} — {game.date}
-                    </span>
+                    <span className="text-sm text-[#ccc]">{game.date}</span>
                     <span
                       className={`font-bold ${
                         game.verdict === "WIN"
                           ? "text-[#00ff9f]"
-                          : "text-[#ff003c]"
+                          : game.verdict === "LOSE"
+                          ? "text-[#ff003c]"
+                          : "text-[#00c3ff]"
                       }`}
                     >
                       {game.verdict}

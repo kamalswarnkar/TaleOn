@@ -1,0 +1,17 @@
+{
+  "watch": ["src"],
+  "ext": "js,json",
+  "ignore": ["node_modules", "*.test.js"],
+  "exec": "node src/server.js",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000",
+  "restartable": "rs",
+  "crash": true,
+  "exitcrash": true,
+  "verbose": true,
+  "legacyWatch": true,
+  "polling": false,
+  "signal": "SIGTERM"
+}

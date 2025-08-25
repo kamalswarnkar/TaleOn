@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/Signup.css"; // for extra styles like eye glow
+import axios from "axios";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -23,21 +24,41 @@ const Signup = () => {
     else setStrength("Strong");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) {
       alert("Please fill all fields!");
       return;
     }
 
-    // Save user session
-    sessionStorage.setItem(
-      "user",
-      JSON.stringify({ name, email })
-    );
+    try {
+      // call backend signup API
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/auth/signup`,
+        {
+          username: name,
+          email,
+          password,
+        }
+      );
 
-    alert("Account created! (Backend integration pending)");
-    navigate("/"); // Redirect to landing
+      // backend returns: { _id, username, email, token }
+      const userObj = {
+        _id: res.data._id,
+        username: res.data.username,
+        email: res.data.email,
+        token: res.data.token,
+      };
+
+      sessionStorage.setItem("user", JSON.stringify(userObj));
+
+      alert("Account created!");
+      navigate("/"); // Redirect to landing
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.message || "Signup failed";
+      alert(msg);
+    }
   };
 
   return (

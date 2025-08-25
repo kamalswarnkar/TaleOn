@@ -2,6 +2,16 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
+    // Debug: Check what environment variables are loaded
+    console.log('🔍 Environment Variables Debug:');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('MONGO_URI:', process.env.MONGO_URI ? '✅ Found' : '❌ Missing');
+    console.log('All env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
+    
+    if (!process.env.MONGO_URI) {
+      throw new Error('MONGO_URI environment variable is not set. Please check your .env file.');
+    }
+    
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB Connected');
   } catch (error) {

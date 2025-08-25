@@ -1,60 +1,98 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const GameRoom = () => {
   const navigate = useNavigate();
 
-  const storedPlayers =
-    JSON.parse(sessionStorage.getItem("players")) || [
-      sessionStorage.getItem("playerName") || "Player",
-      "AI_Buddy",
-    ];
-
+  // Get stored players with their chosen names
+  const storedPlayers = JSON.parse(sessionStorage.getItem("players")) || [];
   const storedTurnTime = parseInt(sessionStorage.getItem("turnTime")) || 10;
   const storedMaxRounds = parseInt(sessionStorage.getItem("maxRounds")) || 5;
+
+  const roomCode = sessionStorage.getItem("roomCode") || "ABCD12";
+  const gameId = sessionStorage.getItem("gameId");
+  const gameTitle = sessionStorage.getItem("gameTitle") || "Untitled Tale";
+  const gameGenre = sessionStorage.getItem("gameGenre") || "Custom";
+
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   const [players] = useState(storedPlayers);
   const [currentTurnIndex, setCurrentTurnIndex] = useState(() => {
     const tossWinner = sessionStorage.getItem("tossWinner");
-    return tossWinner ? players.indexOf(tossWinner) : 0;
+    return tossWinner
+      ? players.findIndex((p) => p.username === tossWinner)
+      : 0;
   });
   const [currentRound, setCurrentRound] = useState(1);
-  const [story, setStory] = useState([]);
+  const [story, setStory] = useState([]); // [{player, text}]
   const [timeLeft, setTimeLeft] = useState(storedTurnTime * 60);
   const [storyInput, setStoryInput] = useState("");
-
   const timerRef = useRef(null);
 
-  const roomCode = sessionStorage.getItem("roomCode") || "ABCD12";
+  // 🔑 Helper to map ID → username/chosen name
+  const getPlayerName = (playerId) => {
+    // First try to find by username (chosen name)
+    const p = players.find(
+      (pl) => pl.username === playerId || pl._id === playerId
+    );
+    
+    if (p) {
+      return p.username || p.name || "Player";
+    }
+    
+    // Fallback to playerId if no match found
+    return playerId;
+  };
 
   useEffect(() => {
     updateTurnDisplay();
     startTimer();
-    // Cleanup timer when unmounting
     return () => clearInterval(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTurnIndex, currentRound]);
 
-  const updateTurnDisplay = () => {
+  const updateTurnDisplay = async () => {
     setStoryInput("");
+    const currentPlayer = players[currentTurnIndex]?.username || "Player";
 
-    if (players[currentTurnIndex] === "AI_Buddy") {
-      setTimeout(() => {
-        const aiText = "AI_Buddy continues the story with a twist...";
-        setStory((prev) => [...prev, { player: "AI_Buddy", text: aiText }]);
+    if (currentPlayer === "AI_Buddy") {
+      try {
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/turn`,
+          { roomCode, gameId },
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+
+        if (res.data?.story) {
+          setStory(res.data.story);
+        } else {
+          setStory((prev) => [
+            ...prev,
+            { player: "AI_Buddy", text: res.data?.text || "AI had no response." },
+          ]);
+        }
+
         nextTurn();
-      }, 1500);
+      } catch (err) {
+        console.error(err);
+        setStory((prev) => [
+          ...prev,
+          { player: "AI_Buddy", text: "AI failed to respond, skipping..." },
+        ]);
+        nextTurn();
+      }
     }
   };
 
   const startTimer = () => {
     clearInterval(timerRef.current);
     setTimeLeft(storedTurnTime * 60);
-
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          if (players[currentTurnIndex] !== "AI_Buddy") {
+          if (players[currentTurnIndex]?.username !== "AI_Buddy") {
             nextTurn();
           }
           return 0;
@@ -72,21 +110,36 @@ const GameRoom = () => {
       .padStart(2, "0")}`;
   };
 
-  const submitTurn = () => {
+  const submitTurn = async () => {
     if (!storyInput.trim()) {
       alert("Please write something before submitting!");
       return;
     }
-    setStory((prev) => [
-      ...prev,
-      { player: players[currentTurnIndex], text: storyInput.trim() },
-    ]);
-    nextTurn();
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/turn`,
+        { roomCode, gameId, text: storyInput.trim() },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      if (res.data?.story) {
+        setStory(res.data.story);
+      } else {
+        setStory((prev) => [
+          ...prev,
+          { player: players[currentTurnIndex]?.username || "Player", text: storyInput.trim() },
+        ]);
+      }
+
+      nextTurn();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit turn");
+    }
   };
 
   const nextTurn = () => {
     clearInterval(timerRef.current);
-
     let nextRound = currentRound;
     let nextIndex = (currentTurnIndex + 1) % players.length;
 
@@ -95,7 +148,22 @@ const GameRoom = () => {
     }
 
     if (nextRound > storedMaxRounds) {
-      sessionStorage.setItem("story", JSON.stringify(story));
+      // ✅ Ensure story is stored with proper player names for judgement
+      const storyWithNames = story.map(entry => ({
+        player: entry.player || "Player",
+        text: entry.text || ""
+      }));
+      
+      sessionStorage.setItem("story", JSON.stringify(storyWithNames));
+      sessionStorage.setItem(
+        "archiveGame",
+        JSON.stringify({
+          gameId,
+          title: gameTitle,
+          genre: gameGenre,
+          story: storyWithNames,
+        })
+      );
       navigate("/judgement");
       return;
     }
@@ -107,7 +175,6 @@ const GameRoom = () => {
   return (
     <div className="bg-[#0a0a0a] text-white font-inter min-h-screen flex items-center justify-center">
       <div className="max-w-[800px] w-full p-6 text-center">
-        {/* Title */}
         <h1
           className="font-orbitron text-[2.5rem] tracking-[2px] text-[#00c3ff]"
           style={{ textShadow: "0 0 10px #00c3ff,0 0 20px #00c3ff" }}
@@ -115,14 +182,13 @@ const GameRoom = () => {
           Tale
           <span
             className="text-[#ff006f]"
-            style={{ textShadow: "0 0 10px #ff006f,0 0 20px #ff006f" }}
+            style={{ textShadow: "0 0 10px #ff006f" }}
           >
             On
           </span>{" "}
           Game
         </h1>
 
-        {/* Room Code */}
         <p className="text-sm mt-1 mb-5 text-[#ccc]">
           Room Code:{" "}
           <span
@@ -133,12 +199,11 @@ const GameRoom = () => {
           </span>
         </p>
 
-        {/* Story Feed */}
         <div className="bg-white/5 p-4 rounded-md border border-[#00c3ff] shadow-[0_0_10px_#00c3ff] h-[300px] overflow-y-auto text-left mb-6">
           {story.length > 0 ? (
             story.map((entry, index) => (
               <p key={index}>
-                <strong>{entry.player}:</strong> {entry.text}
+                <strong>{getPlayerName(entry.player)}:</strong> {entry.text}
               </p>
             ))
           ) : (
@@ -146,15 +211,25 @@ const GameRoom = () => {
           )}
         </div>
 
-        {/* Turn Info */}
         <div className="mb-4">
-          <p>Current Turn: {players[currentTurnIndex]}</p>
+          <p>Current Turn: {players[currentTurnIndex]?.username || "Player"}</p>
+          <p>
+            Round {currentRound} / {storedMaxRounds}
+          </p>
           <p>Time Left: {formatTime(timeLeft)}</p>
         </div>
 
-        {/* Turn Input */}
-        {players[currentTurnIndex] !== "AI_Buddy" && (
+        {players[currentTurnIndex]?.username !== "AI_Buddy" && (
           <div className="mt-4">
+            {/* Story Writing Tips */}
+            <div className="mb-3 p-2 bg-white/5 rounded-md border border-[#00c3ff] text-xs text-[#ccc]">
+              <p className="mb-1"><strong>💡 Story Writing Tips:</strong></p>
+              <p>• Write coherent sentences that advance the plot</p>
+              <p>• Build on what previous players wrote</p>
+              <p>• Avoid random text or gibberish</p>
+              <p>• Keep the story engaging and logical</p>
+            </div>
+            
             <textarea
               placeholder="Write your part of the story..."
               value={storyInput}

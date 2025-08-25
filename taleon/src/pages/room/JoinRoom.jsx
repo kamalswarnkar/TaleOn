@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const JoinRoom = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const JoinRoom = () => {
     setTimeout(() => setErrorMsg(""), 4000);
   };
 
-  const joinRoom = () => {
+  const joinRoom = async () => {
     const name = playerName.trim();
     const code = roomCode.trim().toUpperCase();
 
@@ -31,21 +32,36 @@ const JoinRoom = () => {
       return;
     }
 
-    sessionStorage.setItem("playerName", name);
-    sessionStorage.setItem("roomCode", code);
-
-    // placeholder for backend check
-    const validRoom = true;
-    if (!validRoom) {
-      sessionStorage.setItem(
-        "errorMessage",
-        "Invalid room code or room no longer exists."
-      );
-      navigate("/error");
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    if (!user?.token) {
+      alert("You must log in to join a room.");
+      navigate("/login");
       return;
     }
 
-    navigate("/lobby");
+    try {
+      // backend call
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/join`,
+        { roomCode: code, playerName: name },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+
+      // backend confirms and returns room details
+      sessionStorage.setItem("playerName", name);
+      sessionStorage.setItem("roomCode", res.data.roomCode);
+
+      navigate("/lobby");
+    } catch (err) {
+      console.error(err);
+      const msg =
+        err?.response?.data?.message ||
+        "Invalid room code or room no longer exists.";
+      sessionStorage.setItem("errorMessage", msg);
+      navigate("/error");
+    }
   };
 
   const goBack = () => {
@@ -71,7 +87,10 @@ const JoinRoom = () => {
 
         {/* Player Name */}
         <div className="my-5 text-left">
-          <label htmlFor="playerName" className="block font-bold mb-1 text-[#ccc]">
+          <label
+            htmlFor="playerName"
+            className="block font-bold mb-1 text-[#ccc]"
+          >
             Your Name
           </label>
           <input
@@ -86,7 +105,10 @@ const JoinRoom = () => {
 
         {/* Room Code */}
         <div className="my-5 text-left">
-          <label htmlFor="roomCode" className="block font-bold mb-1 text-[#ccc]">
+          <label
+            htmlFor="roomCode"
+            className="block font-bold mb-1 text-[#ccc]"
+          >
             Room Code
           </label>
           <input

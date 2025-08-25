@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Toss = () => {
   const navigate = useNavigate();
@@ -7,22 +8,54 @@ const Toss = () => {
   const [result, setResult] = useState("");
   const [showResult, setShowResult] = useState(false);
 
-  const startToss = () => {
-    let players =
-      JSON.parse(sessionStorage.getItem("players")) || [
-        sessionStorage.getItem("playerName") || "Player",
-        "AI_Buddy",
-      ];
+  const startToss = async () => {
+    const roomCode = sessionStorage.getItem("roomCode");
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+
+    if (!roomCode || !user?.token) {
+      alert("Missing room or login info.");
+      navigate("/");
+      return;
+    }
 
     setFlipping(true);
 
-    setTimeout(() => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/start`,
+        { roomCode },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+
+      // ✅ backend should now include players in response
+      const { players = [], gameId, title, genre } = res.data;
+
+      if (!players.length) {
+        throw new Error("No players returned from backend.");
+      }
+
+      const starter = players[0].username;
+
+      // store game session info
+      sessionStorage.setItem("tossWinner", starter);
+      sessionStorage.setItem("players", JSON.stringify(players));
+      sessionStorage.setItem("gameId", gameId);
+      sessionStorage.setItem("gameTitle", title);
+      sessionStorage.setItem("gameGenre", genre);
+
+      setTimeout(() => {
+        setFlipping(false);
+        setResult(`${starter} starts the story!`);
+        setShowResult(true);
+      }, 1000);
+    } catch (err) {
+      console.error(err);
       setFlipping(false);
-      const winner = players[Math.floor(Math.random() * players.length)];
-      sessionStorage.setItem("tossWinner", winner);
-      setResult(`${winner} starts the story!`);
-      setShowResult(true);
-    }, 1000);
+      alert(err?.response?.data?.message || "Failed to start toss/game");
+      navigate("/");
+    }
   };
 
   const goToGame = () => {

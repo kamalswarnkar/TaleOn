@@ -18,6 +18,12 @@ const roomSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    // Map user IDs to their chosen player names
+    playerNames: {
+      type: Map,
+      of: String,
+      default: {}
+    },
     game: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Game", // each room is tied to a Game session
