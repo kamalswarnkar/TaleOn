@@ -153,33 +153,26 @@ async function judgeStory({ story }) {
   }
 
                const messages = [
-               {
-                 role: "system",
-                 content:
-                   "You are a balanced judge for a collaborative story game. " +
-                   "You are judging ONLY the HUMAN player's contribution to the story, NOT the AI's contribution. " +
-                   "Evaluate the human's storytelling quality, coherence, and effort. " +
-                   "Be fair but require actual storytelling - not random text, gibberish, or single words. " +
-                   "Reward coherent narratives and creativity, but don't be overly harsh on minor issues. " +
-                   "Return a very short JSON ONLY with fields: verdict ('WIN' or 'LOSE'), " +
-                   "and scores as strings out of 5 for flow, creativity, vibe, immersion. " +
-                   "Use the full 1-5 scale: 1/5 for very poor, 2/5 for weak, 3/5 for decent, 4/5 for good, 5/5 for excellent. " +
-                   "Be balanced - require coherent storytelling but encourage creativity."
-               },
-               {
-                 role: "user",
-                 content:
-                   "Judge ONLY the HUMAN player's contribution to this story (ignore any AI contributions):\n" + flat +
-                   "\n\nScoring Criteria:" +
-                   "\n- Flow (1-5): Logical progression, coherent narrative structure" +
-                   "\n- Creativity (1-5): Original ideas, imaginative elements" +
-                   "\n- Vibe (1-5): Consistent tone, engaging atmosphere" +
-                   "\n- Immersion (1-5): Draws reader in, maintains interest" +
-                   "\n\nRespond strictly in JSON like: " +
-                   '{"verdict":"WIN","scores":{"flow":"3/5","creativity":"4/5","vibe":"3/5","immersion":"3/5"}}' +
-                   "\n\nBe balanced - require coherent storytelling but encourage creativity."
-               }
-             ];
+  {
+    role: "system",
+    content:
+      "You are a STRICT and FAIR judge for a collaborative story game. " +
+      "Evaluate the FINAL STORY as a whole (all turns: human + AI together). " +
+      "Apply these rules:\n" +
+      "- Automatic LOSE if the story is mostly nonsense, random letters, or gibberish.\n" +
+      "- Automatic LOSE if the story is just refusals, meta-talk (e.g., 'I cannot continue', 'please provide context'), or meaningless filler.\n" +
+      "- Automatic LOSE if the story is extremely short (< 20 words total).\n" +
+      "- Otherwise, score fairly on the 1–5 scale for Flow, Creativity, Vibe, and Immersion.\n" +
+      "- Use the FULL range (1 = terrible, 5 = excellent).\n\n" +
+      "Return ONLY JSON like:\n" +
+      '{"verdict":"WIN","scores":{"flow":"3/5","creativity":"4/5","vibe":"3/5","immersion":"3/5"}}'
+  },
+  {
+    role: "user",
+    content: "Here is the final story to judge:\n\n" + story.map(s => (typeof s === "string" ? s : (s.text || s.content || ""))).join("\n")
+  }
+];
+
 
   const raw = await callGroqAI(messages, "llama-3.1-8b-instant", 150, 0.7); // Slightly higher temperature for more varied responses
   console.log(`[JUDGE] Raw AI response:`, raw);
