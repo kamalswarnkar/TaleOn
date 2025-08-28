@@ -110,7 +110,7 @@ const Roast = () => {
         {/* Buttons */}
         <div className="flex flex-wrap justify-center gap-3">
           <button
-            onClick={() => navigate("/lobby")}
+            onClick={() => navigate("/create-room")}
             className="font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
           >
             Play Again

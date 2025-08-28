@@ -58,13 +58,33 @@ router.post("/join", protect, async (req, res) => {
         room.playerNames.set(req.user._id.toString(), playerName.trim());
       }
       await room.save();
+
+      // ✅ If there's an active game, add the new player to it
+      if (room.game) {
+        const Game = (await import("../models/Game.js")).default;
+        const game = await Game.findById(room.game);
+        
+        if (game && game.isActive) {
+          // Check if player is already in the game
+          const playerInGame = game.players.some(id => id.toString() === req.user._id.toString());
+          
+          if (!playerInGame) {
+            // Add player to the end of the game's player list
+            game.players.push(req.user._id);
+            await game.save();
+            
+            console.log(`[ROOM] Added new player ${req.user.username} to active game ${game._id}`);
+          }
+        }
+      }
     }
 
     res.json({
       message: "Joined room successfully",
       roomCode: room.roomCode,
       players: room.players,
-      playerName: playerName || req.user.username
+      playerName: playerName || req.user.username,
+      hasActiveGame: !!room.game
     });
   } catch (error) {
     res.status(500).json({ message: "Error joining room", error: error.message });
@@ -131,16 +151,23 @@ router.post("/leave", protect, async (req, res) => {
       }
     }
 
-    // If there's an active game and not enough players, end it
+    // If there's an active game and not enough players, handle it
     if (room.game && room.players.length < 2) {
       // Import Game model here since we're in roomRoutes
       const Game = (await import("../models/Game.js")).default;
       const game = await Game.findById(room.game);
       if (game) {
-        game.isActive = false;
-        game.verdict = "ABANDONED"; // Mark as abandoned instead of PENDING
+        // Only mark as abandoned if the game was never started or has no story
+        if (!game.story || game.story.length === 0) {
+          game.isActive = false;
+          game.verdict = "ABANDONED";
+          console.log(`[ROOM] Game ${game._id} marked as ABANDONED - no story content`);
+        } else {
+          // Keep game as PENDING if it has story content, let it be judged later
+          game.isActive = false;
+          console.log(`[ROOM] Game ${game._id} kept as PENDING - has story content for judgement`);
+        }
         await game.save();
-        console.log(`[ROOM] Game ${game._id} marked as ABANDONED due to insufficient players`);
       }
       room.game = undefined; // Remove game reference
     }

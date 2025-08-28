@@ -1,8 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { checkAndRejoinSession, clearGameData } from "../../utils/rejoin.js";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [showRejoinModal, setShowRejoinModal] = useState(false);
+  const [rejoinData, setRejoinData] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const sessionCheck = await checkAndRejoinSession();
+        if (sessionCheck.canRejoin) {
+          setRejoinData(sessionCheck);
+          setShowRejoinModal(true);
+        }
+      } catch (error) {
+        console.error("Session check failed:", error);
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const handleRejoin = () => {
+    if (rejoinData) {
+      navigate(rejoinData.redirectTo);
+    }
+  };
+
+  const handleDismissRejoin = () => {
+    setShowRejoinModal(false);
+    setRejoinData(null);
+    // Clear all game/room data when dismissing rejoin
+    clearGameData();
+  };
 
   const handleProtectedNavigation = (path) => {
     const isLoggedIn = !!sessionStorage.getItem("user"); // Change to localStorage if persistent
@@ -13,8 +48,53 @@ const Landing = () => {
     }
   };
 
+  if (checkingSession) {
+    return (
+      <div className="bg-[#0a0a0a] text-white font-inter flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00c3ff] mx-auto mb-4"></div>
+          <p className="text-[#ccc]">Checking for active sessions...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#0a0a0a] text-white font-inter text-center flex flex-col min-h-screen">
+      {/* Rejoin Modal */}
+      {showRejoinModal && rejoinData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111] border border-[#00c3ff] rounded-lg shadow-[0_0_20px_#00c3ff] p-6 max-w-md w-full">
+            <h3 className="font-orbitron text-xl text-[#00c3ff] mb-4">
+              Rejoin Session?
+            </h3>
+                         <p className="text-[#ccc] mb-6">
+               You have an active {rejoinData.type === "game" ? "game" : "room"} session. 
+               Would you like to rejoin?
+             </p>
+             {rejoinData.reason && (
+               <p className="text-[#ff6b6b] text-sm mb-4">
+                 Note: {rejoinData.reason}
+               </p>
+             )}
+            <div className="flex gap-3">
+              <button
+                onClick={handleRejoin}
+                className="flex-1 font-orbitron text-base px-4 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+              >
+                Rejoin
+              </button>
+              <button
+                onClick={handleDismissRejoin}
+                className="flex-1 font-orbitron text-base px-4 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-[700px] mx-auto p-8 flex-1">
         {/* Title */}
         <h1

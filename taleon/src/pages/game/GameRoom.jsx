@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../components/UI/Toast";
 import axios from "axios";
 
 const GameRoom = () => {
@@ -29,6 +30,7 @@ const GameRoom = () => {
   const [timeLeft, setTimeLeft] = useState(storedTurnTime * 60);
   const [storyInput, setStoryInput] = useState("");
   const timerRef = useRef(null);
+  const { error } = useToast();
 
   // 🔑 Helper to map ID → username/chosen name
   const getPlayerName = (playerId) => {
@@ -112,7 +114,7 @@ const GameRoom = () => {
 
   const submitTurn = async () => {
     if (!storyInput.trim()) {
-      alert("Please write something before submitting!");
+      error("Please write something before submitting!");
       return;
     }
     try {
@@ -134,7 +136,7 @@ const GameRoom = () => {
       nextTurn();
     } catch (err) {
       console.error(err);
-      alert("Failed to submit turn");
+      error("Failed to submit turn");
     }
   };
 

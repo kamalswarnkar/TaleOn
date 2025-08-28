@@ -116,42 +116,72 @@ async function generateGameMeta() {
    Judgement AI
    ============================================================ */
 async function judgeStory({ story }) {
-  const flat = Array.isArray(story)
-    ? story.map(s => (typeof s === "string" ? s : (s.text || s.content || ""))).join("\n")
-    : "";
+  // ✅ Extract only HUMAN player contributions (exclude AI_Buddy)
+  const humanEntries = story.filter(s => {
+    const playerName = typeof s === "object" ? (s.player || "") : "";
+    return playerName !== "AI_Buddy" && playerName !== "AI";
+  });
+  
+  const humanText = humanEntries.map(s => (typeof s === "string" ? s : (s.text || s.content || ""))).join("\n");
+  
+  console.log(`[JUDGE] Judging HUMAN contributions only`);
+  console.log(`[JUDGE] Total story entries: ${story.length}, Human entries: ${humanEntries.length}`);
+  console.log(`[JUDGE] Human content:`, humanText.substring(0, 200) + "...");
+  
+  // If no human content, return LOSE
+  if (!humanText.trim()) {
+    console.log(`[JUDGE] No human content found, returning LOSE`);
+    return {
+      verdict: "LOSE",
+      scores: { flow: "1/5", creativity: "1/5", vibe: "1/5", immersion: "1/5" }
+    };
+  }
+  
+  const flat = humanText; // Use only human text for judgement
 
-  console.log(`[JUDGE] Judging story with ${story.length} entries`);
-  console.log(`[JUDGE] Story content:`, flat.substring(0, 200) + "...");
+  // Basic validation - only reject obviously bad content
+  const wordCount = flat.split(' ').length;
+  const hasMinimalContent = wordCount < 5; // Very lenient - only 5 words minimum
+  const isCompletelyEmpty = flat.trim().length === 0;
+  
+  if (isCompletelyEmpty) {
+    console.log(`[JUDGE] Story is completely empty, returning LOSE`);
+    return {
+      verdict: "LOSE",
+      scores: { flow: "1/5", creativity: "1/5", vibe: "1/5", immersion: "1/5" }
+    };
+  }
 
-  const messages = [
-    {
-      role: "system",
-      content:
-        "You are a moderately strict judge for a collaborative story game. " +
-        "Evaluate stories based on storytelling quality, coherence, and effort. " +
-        "Be fair but require actual storytelling - not just random text or gibberish. " +
-        "Reward creativity and coherent narratives, but don't be overly harsh on minor issues. " +
-        "Return a very short JSON ONLY with fields: verdict ('WIN' or 'LOSE'), " +
-        "and scores as strings out of 5 for flow, creativity, vibe, immersion. " +
-        "Use the full 1-5 scale properly - 1/5 for poor, 2/5 for weak, 3/5 for decent, 4/5 for good, 5/5 for excellent. " +
-        "Be balanced - require effort but encourage creativity."
-    },
-    {
-      role: "user",
-      content:
-        "Judge this story with moderate standards:\n" + flat +
-        "\n\nScoring Criteria:" +
-        "\n- Flow (1-5): Logical progression, coherent narrative structure" +
-        "\n- Creativity (1-5): Original ideas, imaginative elements, not random text" +
-        "\n- Vibe (1-5): Consistent tone, engaging atmosphere, genre adherence" +
-        "\n- Immersion (1-5): Draws reader in, maintains interest, believable" +
-        "\n\nRespond strictly in JSON like: " +
-        '{"verdict":"WIN","scores":{"flow":"3/5","creativity":"4/5","vibe":"3/5","immersion":"3/5"}}' +
-        "\n\nBe moderately strict - require decent storytelling but don't be overly harsh."
-    }
-  ];
+               const messages = [
+               {
+                 role: "system",
+                 content:
+                   "You are a balanced judge for a collaborative story game. " +
+                   "You are judging ONLY the HUMAN player's contribution to the story, NOT the AI's contribution. " +
+                   "Evaluate the human's storytelling quality, coherence, and effort. " +
+                   "Be fair but require actual storytelling - not random text, gibberish, or single words. " +
+                   "Reward coherent narratives and creativity, but don't be overly harsh on minor issues. " +
+                   "Return a very short JSON ONLY with fields: verdict ('WIN' or 'LOSE'), " +
+                   "and scores as strings out of 5 for flow, creativity, vibe, immersion. " +
+                   "Use the full 1-5 scale: 1/5 for very poor, 2/5 for weak, 3/5 for decent, 4/5 for good, 5/5 for excellent. " +
+                   "Be balanced - require coherent storytelling but encourage creativity."
+               },
+               {
+                 role: "user",
+                 content:
+                   "Judge ONLY the HUMAN player's contribution to this story (ignore any AI contributions):\n" + flat +
+                   "\n\nScoring Criteria:" +
+                   "\n- Flow (1-5): Logical progression, coherent narrative structure" +
+                   "\n- Creativity (1-5): Original ideas, imaginative elements" +
+                   "\n- Vibe (1-5): Consistent tone, engaging atmosphere" +
+                   "\n- Immersion (1-5): Draws reader in, maintains interest" +
+                   "\n\nRespond strictly in JSON like: " +
+                   '{"verdict":"WIN","scores":{"flow":"3/5","creativity":"4/5","vibe":"3/5","immersion":"3/5"}}' +
+                   "\n\nBe balanced - require coherent storytelling but encourage creativity."
+               }
+             ];
 
-  const raw = await callGroqAI(messages, "llama-3.1-8b-instant", 150, 0.6); // Balanced temperature for fair evaluation
+  const raw = await callGroqAI(messages, "llama-3.1-8b-instant", 150, 0.7); // Slightly higher temperature for more varied responses
   console.log(`[JUDGE] Raw AI response:`, raw);
 
   try {
@@ -159,32 +189,26 @@ async function judgeStory({ story }) {
     if (parsed?.verdict && parsed?.scores) {
       console.log(`[JUDGE] Successfully parsed verdict:`, parsed.verdict);
       
-      // ✅ Additional validation: Ensure scores are reasonable
+      // Only apply minimal validation - be very lenient
       const scores = parsed.scores;
       const totalScore = Object.values(scores).reduce((sum, score) => {
         const num = parseInt(score.split('/')[0]);
         return sum + (isNaN(num) ? 0 : num);
       }, 0);
       
-      // If total score is too high for a poor story, force LOSE
-      if (totalScore > 15 && flat.length < 100) {
-        console.log(`[JUDGE] Story too short but scores too high, forcing LOSE`);
-        return {
-          verdict: "LOSE",
-          scores: { flow: "2/5", creativity: "2/5", vibe: "2/5", immersion: "2/5" }
-        };
-      }
-      
-      // Additional quality checks - moderately strict approach
-      const hasGibberish = /[^a-zA-Z0-9\s.,!?-]/.test(flat) && (flat.includes('...') || flat.includes('---'));
-      const isTooShort = flat.length < 40; // Moderate length requirement
+      // Additional validation for gibberish and poor content
+      const hasGibberish = /[^a-zA-Z0-9\s.,!?-]/.test(flat) && (flat.includes('...') || flat.includes('---') || flat.includes('***'));
+      const isTooShort = flat.length < 20; // Require at least 20 characters
       const hasRepetitiveText = /(\b\w+\b)(?:\s+\1){2,}/.test(flat); // 2+ repetitions
       const hasRandomWords = /\b(?:the|and|or|but|in|on|at|to|for|of|with|by)\b.*\b(?:the|and|or|but|in|on|at|to|for|of|with|by)\b.*\b(?:the|and|or|but|in|on|at|to|for|of|with|by)\b/.test(flat);
-      const hasMinimalContent = flat.split(' ').length < 8; // At least 8 words
+      const hasMinimalContent = flat.split(' ').length < 6; // At least 6 words
+      const hasSingleWords = /^\s*\w+\s*$/.test(flat.trim()); // Just single words
       
-      // If story shows quality issues, make moderate adjustments
-      if (hasGibberish || isTooShort || hasRepetitiveText || hasRandomWords || hasMinimalContent) {
-        console.log(`[JUDGE] Story quality issues detected, making moderate score adjustments`);
+      // If story shows quality issues, adjust scores and potentially force LOSE
+      if (hasGibberish || isTooShort || hasRepetitiveText || hasRandomWords || hasMinimalContent || hasSingleWords) {
+        console.log(`[JUDGE] Story quality issues detected, making adjustments`);
+        
+        // Reduce scores for quality issues
         parsed.scores = {
           flow: Math.max(1, parseInt(parsed.scores.flow) - 1) + "/5",
           creativity: Math.max(1, parseInt(parsed.scores.creativity) - 1) + "/5",
@@ -198,27 +222,62 @@ async function judgeStory({ story }) {
           return sum + (isNaN(num) ? 0 : num);
         }, 0);
         
-        // Force LOSE if scores are low after adjustments
-        if (newTotalScore <= 10) {
+        // Force LOSE for very poor content
+        if (newTotalScore <= 8 || hasGibberish || hasSingleWords) {
+          console.log(`[JUDGE] Poor content detected, forcing LOSE`);
           parsed.verdict = "LOSE";
         }
       }
       
-      // If total score is extremely low, ensure LOSE verdict
-      if (totalScore <= 8) {
+      // Only force LOSE for extremely low scores (very rare)
+      if (totalScore <= 4) {
+        console.log(`[JUDGE] Extremely low scores detected, forcing LOSE`);
         parsed.verdict = "LOSE";
+      }
+      
+      // If AI gave WIN but scores are reasonable, trust the AI
+      if (parsed.verdict === "WIN" && totalScore >= 8) {
+        console.log(`[JUDGE] AI gave WIN with reasonable scores, accepting verdict`);
+        return parsed;
+      }
+      
+      // If AI gave LOSE but scores are decent, reconsider
+      if (parsed.verdict === "LOSE" && totalScore >= 12) {
+        console.log(`[JUDGE] AI gave LOSE but scores are decent, reconsidering to WIN`);
+        parsed.verdict = "WIN";
       }
       
       return parsed;
     }
-  } catch {
+  } catch (error) {
     console.warn("[judgeStory] Non-JSON response:", raw);
+    console.warn("[judgeStory] Parse error:", error.message);
   }
 
-  console.log(`[JUDGE] Falling back to default LOSE verdict`);
+  // Fallback: be balanced - check for obvious quality issues
+  if (hasMinimalContent || flat.length < 20) {
+    console.log(`[JUDGE] Fallback: Human content has minimal content, returning LOSE`);
+    return {
+      verdict: "LOSE",
+      scores: { flow: "2/5", creativity: "2/5", vibe: "2/5", immersion: "2/5" }
+    };
+  }
+  
+  // Check for gibberish patterns in fallback
+  const hasGibberishPatterns = /[^a-zA-Z0-9\s.,!?-]/.test(flat) && (flat.includes('...') || flat.includes('---') || flat.includes('***'));
+  if (hasGibberishPatterns) {
+    console.log(`[JUDGE] Fallback: Human content has gibberish, returning LOSE`);
+    return {
+      verdict: "LOSE",
+      scores: { flow: "1/5", creativity: "1/5", vibe: "1/5", immersion: "1/5" }
+    };
+  }
+  
+  // Default to WIN for reasonable human content
+  console.log(`[JUDGE] Fallback: Defaulting to WIN for reasonable human content`);
   return {
-    verdict: "LOSE",
-    scores: { flow: "2/5", creativity: "2/5", vibe: "2/5", immersion: "2/5" }
+    verdict: "WIN",
+    scores: { flow: "3/5", creativity: "3/5", vibe: "3/5", immersion: "3/5" }
   };
 }
 
@@ -564,14 +623,15 @@ router.post("/judgement", protect, async (req, res) => {
 // Archive
 router.get("/archive", protect, async (req, res) => {
   try {
+    // Get all games for the user (no limit)
     const games = await Game.find({ players: req.user._id })
       .sort({ createdAt: -1 })
-      .limit(25)
       .populate("players", "username")
       .populate("story.user", "username")
       .lean();
 
     const archives = [];
+    const verdictCounts = { ALL: 0, WIN: 0, LOSE: 0, PENDING: 0, ABANDONED: 0 };
     
     for (const g of games) {
       // ✅ Get the room to access chosen player names
@@ -600,9 +660,19 @@ router.get("/archive", protect, async (req, res) => {
         displayVerdict = verdict; // WIN or LOSE
       }
 
+      // Count verdicts
+      verdictCounts.ALL++;
+      if (verdictCounts.hasOwnProperty(displayVerdict)) {
+        verdictCounts[displayVerdict]++;
+      }
+
       archives.push({
         id: String(g._id),
-        date: new Date(g.updatedAt || g.createdAt).toISOString().slice(0, 10),
+        date: new Date(g.updatedAt || g.createdAt).toLocaleDateString('en-US', { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric' 
+        }),
         verdict: displayVerdict,
         title: g.title || "Untitled Tale",
         genre: g.genre || "Custom",
@@ -612,8 +682,13 @@ router.get("/archive", protect, async (req, res) => {
 
     console.log(`[ARCHIVE] Retrieved ${archives.length} games for user ${req.user._id}`);
     console.log(`[ARCHIVE] Verdicts:`, archives.map(g => ({ id: g.id, verdict: g.verdict })));
+    console.log(`[ARCHIVE] Verdict counts:`, verdictCounts);
 
-    res.json({ archives });
+    res.json({ 
+      archives,
+      filters: { verdictCounts },
+      pagination: { totalGames: games.length }
+    });
   } catch (error) {
     console.error("[/game/archive] error:", error);
     res.status(500).json({ message: "Error fetching archives", error: error.message });
@@ -821,11 +896,17 @@ router.post("/leave", protect, async (req, res) => {
     // Remove player from game
     game.players = game.players.filter(id => id.toString() !== req.user._id.toString());
     
-    // If not enough players left, end the game
+    // If not enough players left, handle the game
     if (game.players.length < 2) {
       game.isActive = false;
-      game.verdict = "ABANDONED";
-      console.log(`[GAME] Game ${game._id} ended due to insufficient players`);
+      // Only mark as abandoned if the game was never started or has no story
+      if (!game.story || game.story.length === 0) {
+        game.verdict = "ABANDONED";
+        console.log(`[GAME] Game ${game._id} marked as ABANDONED - no story content`);
+      } else {
+        // Keep game as PENDING if it has story content, let it be judged later
+        console.log(`[GAME] Game ${game._id} kept as PENDING - has story content for judgement`);
+      }
     }
 
     await game.save();

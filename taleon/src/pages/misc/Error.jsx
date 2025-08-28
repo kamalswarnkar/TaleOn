@@ -36,7 +36,7 @@ const ErrorPage = () => {
 
         {/* Button */}
         <button
-          onClick={() => navigate("/landing")}
+          onClick={() => navigate("/")}
           className="font-[Orbitron] text-base px-5 py-2 mt-6 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
         >
           Go Back to Home

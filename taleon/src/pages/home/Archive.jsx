@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../components/UI/Toast";
 import axios from "axios";
 
 const Archive = () => {
   const navigate = useNavigate();
+  const { error } = useToast();
   const [archives, setArchives] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [verdictCounts, setVerdictCounts] = useState({});
+  const [totalGames, setTotalGames] = useState(0);
 
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
@@ -19,8 +24,8 @@ const Archive = () => {
         );
 
         const games = (res.data.archives || []).map((g) => {
-          // Ensure we have a proper verdict - only show PENDING if no verdict exists
-          const verdict = g.verdict && g.verdict !== "PENDING" ? g.verdict : "PENDING";
+          // Ensure we have a proper verdict - show PENDING if no verdict exists
+          const verdict = g.verdict || "PENDING";
           
           const story = (g.story || []).map((s) => ({
             player:
@@ -37,10 +42,14 @@ const Archive = () => {
           };
         });
 
+        // Set the games and counts from backend
         setArchives(games);
         setFiltered(games);
+        setVerdictCounts(res.data.filters?.verdictCounts || {});
+        setTotalGames(res.data.pagination?.totalGames || 0);
       } catch (err) {
         console.error("Archive fetch failed:", err);
+        error("Failed to load archive");
         setArchives([]);
         setFiltered([]);
       } finally {
@@ -49,11 +58,17 @@ const Archive = () => {
     };
 
     fetchArchives();
-  }, []);
+  }, [error]);
 
   const filterStories = (type) => {
-    if (type === "all") setFiltered(archives);
-    else setFiltered(archives.filter((s) => s.verdict === type));
+    setActiveFilter(type);
+    if (type === "all") {
+      setFiltered(archives);
+    } else if (type === "PENDING") {
+      setFiltered(archives.filter((s) => s.verdict === "PENDING"));
+    } else {
+      setFiltered(archives.filter((s) => s.verdict === type));
+    }
   };
 
   return (
@@ -81,21 +96,43 @@ const Archive = () => {
         <div className="mb-6">
           <button
             onClick={() => filterStories("all")}
-            className="font-orbitron text-sm px-4 py-2 m-1 rounded-md bg-[#00c3ff] text-black hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff] transition duration-300"
+            className={`font-orbitron text-sm px-4 py-2 m-1 rounded-md transition duration-300 ${
+              activeFilter === "all"
+                ? "bg-[#00c3ff] text-black shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+                : "bg-[#333] text-white hover:bg-[#444]"
+            }`}
           >
-            All
+            All ({verdictCounts.ALL || totalGames || archives.length})
           </button>
           <button
             onClick={() => filterStories("WIN")}
-            className="font-orbitron text-sm px-4 py-2 m-1 rounded-md bg-[#00c3ff] text-black hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff] transition duration-300"
+            className={`font-orbitron text-sm px-4 py-2 m-1 rounded-md transition duration-300 ${
+              activeFilter === "WIN"
+                ? "bg-[#00ff9f] text-black shadow-[0_0_15px_#00ff9f,0_0_25px_#00ff9f]"
+                : "bg-[#333] text-white hover:bg-[#444]"
+            }`}
           >
-            Wins
+            Wins ({verdictCounts.WIN || 0})
           </button>
           <button
             onClick={() => filterStories("LOSE")}
-            className="font-orbitron text-sm px-4 py-2 m-1 rounded-md bg-[#00c3ff] text-black hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff] transition duration-300"
+            className={`font-orbitron text-sm px-4 py-2 m-1 rounded-md transition duration-300 ${
+              activeFilter === "LOSE"
+                ? "bg-[#ff003c] text-black shadow-[0_0_15px_#ff003c,0_0_25px_#ff003c]"
+                : "bg-[#333] text-white hover:bg-[#444]"
+            }`}
           >
-            Losses
+            Losses ({verdictCounts.LOSE || 0})
+          </button>
+          <button
+            onClick={() => filterStories("PENDING")}
+            className={`font-orbitron text-sm px-4 py-2 m-1 rounded-md transition duration-300 ${
+              activeFilter === "PENDING"
+                ? "bg-[#00c3ff] text-black shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+                : "bg-[#333] text-white hover:bg-[#444]"
+            }`}
+          >
+            Pending ({verdictCounts.PENDING || 0})
           </button>
         </div>
 
@@ -136,11 +173,15 @@ const Archive = () => {
 
                   {/* Story */}
                   <div className="bg-white/5 p-2 rounded-md text-sm max-h-[150px] overflow-y-auto">
-                    {game.story.map((s, idx) => (
-                      <div key={idx}>
-                        <strong>{s.player}:</strong> {s.text}
-                      </div>
-                    ))}
+                    {game.story.length > 0 ? (
+                      game.story.map((s, idx) => (
+                        <div key={idx} className="mb-1">
+                          <strong>{s.player}:</strong> {s.text}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-[#aaa] italic">No story content available.</p>
+                    )}
                   </div>
                 </div>
               ))}

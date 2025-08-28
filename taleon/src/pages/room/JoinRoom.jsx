@@ -43,7 +43,7 @@ const JoinRoom = () => {
       // backend call
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/join`,
-        { roomCode: code, playerName: name },
+        { roomCode: code },
         {
           headers: { Authorization: `Bearer ${user.token}` },
         }

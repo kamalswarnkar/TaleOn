@@ -1,11 +1,41 @@
 // src/sockets/gameSocket.js
 import Game from "../models/Game.js";
+import Room from "../models/Room.js";
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 const presence = new Map(); // roomCode -> { users: Map<socketId, username> }
 const timers = {}; // roomCode -> timeout
 
+// Helper function to verify JWT token
+const verifyToken = async (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+    return user;
+  } catch (error) {
+    return null;
+  }
+};
+
+// Helper function to verify room membership
+const verifyRoomMembership = async (roomCode, userId) => {
+  try {
+    const room = await Room.findOne({ roomCode });
+    if (!room) return false;
+    
+    // Check if user is in the room's players list
+    return room.players.some(playerId => playerId.toString() === userId.toString());
+  } catch (error) {
+    return false;
+  }
+};
+
 export const gameSocketHandler = (io) => {
   io.on("connection", (socket) => {
+    // Store authenticated user data
+    socket.userData = null;
+
     // Helpers
     const addUser = (roomCode, username) => {
       if (!presence.has(roomCode)) presence.set(roomCode, { users: new Map() });
@@ -23,13 +53,34 @@ export const gameSocketHandler = (io) => {
     };
 
     // --- Room presence ---
-    socket.on("joinRoom", ({ roomCode, username }) => {
-      if (!roomCode) return;
+    socket.on("joinRoom", async ({ roomCode, username, token }) => {
+      if (!roomCode || !token) {
+        socket.emit("error", { message: "Room code and authentication token required" });
+        return;
+      }
+
+      // Verify JWT token
+      const user = await verifyToken(token);
+      if (!user) {
+        socket.emit("error", { message: "Invalid authentication token" });
+        return;
+      }
+
+      // Verify room membership
+      const isMember = await verifyRoomMembership(roomCode, user._id);
+      if (!isMember) {
+        socket.emit("error", { message: "You are not a member of this room" });
+        return;
+      }
+
+      // Store user data for future use
+      socket.userData = { userId: user._id, username: user.username };
+      
       socket.join(roomCode);
-      addUser(roomCode, username || "Player");
+      addUser(roomCode, username || user.username);
 
       io.to(roomCode).emit("playerJoined", {
-        username: username || "Player",
+        username: username || user.username,
         players: listUsers(roomCode),
       });
     });
@@ -59,6 +110,13 @@ export const gameSocketHandler = (io) => {
     // --- Game events ---
     socket.on("startGame", async ({ roomCode, gameId, turnDuration }) => {
       if (!roomCode || !gameId) return;
+      
+      // Verify user is authenticated and in the room
+      if (!socket.userData) {
+        socket.emit("error", { message: "Authentication required" });
+        return;
+      }
+
       io.to(roomCode).emit("gameStarted", { gameId });
 
       const game = await Game.findById(gameId).populate("players");
@@ -74,6 +132,12 @@ export const gameSocketHandler = (io) => {
 
     socket.on("submitTurn", async ({ gameId, userId, content }) => {
       try {
+        // Verify user is authenticated
+        if (!socket.userData || socket.userData.userId.toString() !== userId) {
+          socket.emit("errorMsg", { message: "Authentication required" });
+          return;
+        }
+
         const game = await Game.findById(gameId).populate("players");
         if (!game || !game.isActive) return;
 

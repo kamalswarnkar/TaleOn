@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../components/UI/Toast";
 import "../../styles/Auth.css";
 import axios from "axios";
 
@@ -7,14 +8,18 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { success, error, info } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      alert("Please fill all fields!");
+      error("Please fill all fields!");
       return;
     }
+
+    setLoading(true);
 
     try {
       // call backend API
@@ -33,12 +38,14 @@ const Login = () => {
 
       sessionStorage.setItem("user", JSON.stringify(userObj));
 
-      alert("Login successful!");
+      success("Login successful!");
       navigate("/"); // Redirect to landing
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || "Login failed";
-      alert(msg);
+      error(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,7 +75,8 @@ const Login = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]"
+              disabled={loading}
+              className="w-full p-2 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f] disabled:opacity-50"
             />
           </div>
 
@@ -81,7 +89,8 @@ const Login = () => {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 pr-10 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]"
+              disabled={loading}
+              className="w-full p-2 pr-10 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f] disabled:opacity-50"
             />
             <span
               onClick={() => setShowPassword(!showPassword)}
@@ -101,9 +110,10 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full font-orbitron px-5 py-2 mt-4 rounded-md bg-[#00c3ff] text-black hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff] transition duration-300"
+            disabled={loading}
+            className="w-full font-orbitron px-5 py-2 mt-4 rounded-md bg-[#00c3ff] text-black hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff] transition duration-300 disabled:opacity-50"
           >
-            Log In
+            {loading ? "Logging In..." : "Log In"}
           </button>
 
           <div className="flex items-center my-4">
@@ -112,9 +122,8 @@ const Login = () => {
             <hr className="flex-grow border-[#333]" />
           </div>
 
-          <button
-            type="button"
-            onClick={() => alert("Google Sign-In (Backend pending)")}
+          <a
+            href="http://localhost:5000/auth/google"
             className="w-full flex items-center justify-center gap-3 font-orbitron px-5 py-2 rounded-md bg-white text-black hover:shadow-[0_0_15px_#fff,0_0_25px_#fff] transition duration-300"
           >
             <img
@@ -123,7 +132,7 @@ const Login = () => {
               className="w-5 h-5"
             />
             Sign in with Google
-          </button>
+          </a>
 
           <p className="mt-4 text-sm text-[#aaa] text-center">
             Don't have an account?{" "}

@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../../styles/Auth.css";
 
 const ResetPassword = () => {
+  const { token } = useParams();
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [strength, setStrength] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [tokenValid, setTokenValid] = useState(true);
+
+  useEffect(() => {
+    if (!token) {
+      setTokenValid(false);
+      setMessage("Invalid reset link");
+    }
+  }, [token]);
 
   const checkStrength = (pass) => {
     let s = 0;
@@ -21,18 +35,67 @@ const ResetPassword = () => {
     else setStrength("Strong");
   };
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
     if (!password || !confirmPassword) {
-      alert("Please fill in both fields!");
+      setMessage("Please fill in both fields!");
       return;
     }
     if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      setMessage("Passwords do not match!");
       return;
     }
-    alert("Your password has been updated!");
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/auth/reset-password/${token}`,
+        { password }
+      );
+
+      setMessage("Password updated successfully! Redirecting to login...");
+      
+      // Store user data and redirect to home
+      const userData = response.data;
+      sessionStorage.setItem("user", JSON.stringify(userData));
+      
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Failed to reset password";
+      setMessage(errorMessage);
+      
+      if (error.response?.status === 400) {
+        setTokenValid(false);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!tokenValid) {
+    return (
+      <div className="bg-[#0a0a0a] text-white font-inter flex items-center justify-center min-h-screen px-4">
+        <div className="max-w-md w-full bg-[#111] border border-red-500 rounded-lg shadow-[0_0_20px_#ff0000] p-8 text-center">
+          <h1 className="font-orbitron text-[2rem] text-red-500 mb-4">
+            Invalid Reset Link
+          </h1>
+          <p className="text-[#ccc] mb-6">
+            The password reset link is invalid or has expired.
+          </p>
+          <a 
+            href="/forgot-password" 
+            className="font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+          >
+            Request New Link
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#0a0a0a] text-white font-inter flex items-center justify-center min-h-screen px-4">
@@ -53,6 +116,16 @@ const ResetPassword = () => {
           Enter and confirm your new password below.
         </p>
 
+        {message && (
+          <div className={`p-3 rounded-md mb-4 text-center ${
+            message.includes("successfully") 
+              ? "bg-green-900/20 border border-green-500 text-green-400" 
+              : "bg-red-900/20 border border-red-500 text-red-400"
+          }`}>
+            {message}
+          </div>
+        )}
+
         <form onSubmit={handleReset}>
           <div className="mb-5 relative">
             <label className="block font-bold mb-1 text-[#ccc]">
@@ -66,7 +139,8 @@ const ResetPassword = () => {
                 setPassword(e.target.value);
                 checkStrength(e.target.value);
               }}
-              className="w-full p-2 pr-10 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]"
+              disabled={loading}
+              className="w-full p-2 pr-10 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f] disabled:opacity-50"
             />
             <span
               onClick={() => setShowPassword(!showPassword)}
@@ -100,7 +174,8 @@ const ResetPassword = () => {
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-2 pr-10 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]"
+              disabled={loading}
+              className="w-full p-2 pr-10 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f] disabled:opacity-50"
             />
             <span
               onClick={() => setShowConfirm(!showConfirm)}
@@ -114,9 +189,10 @@ const ResetPassword = () => {
 
           <button
             type="submit"
-            className="w-full font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+            disabled={loading}
+            className="w-full font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff] disabled:opacity-50"
           >
-            Update Password
+            {loading ? "Updating..." : "Update Password"}
           </button>
 
           <p className="mt-6 text-center text-sm">

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../components/UI/Toast";
 import axios from "axios";
 
 const Toss = () => {
   const navigate = useNavigate();
+  const { error } = useToast();
   const [flipping, setFlipping] = useState(false);
   const [result, setResult] = useState("");
   const [showResult, setShowResult] = useState(false);
@@ -13,7 +15,7 @@ const Toss = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
     if (!roomCode || !user?.token) {
-      alert("Missing room or login info.");
+      error("Missing room or login info.");
       navigate("/");
       return;
     }
@@ -29,14 +31,15 @@ const Toss = () => {
         }
       );
 
-      // ✅ backend should now include players in response
-      const { players = [], gameId, title, genre } = res.data;
+      // ✅ backend now explicitly provides starter information
+      const { players = [], gameId, title, genre, starterUserId, starterName } = res.data;
 
       if (!players.length) {
         throw new Error("No players returned from backend.");
       }
 
-      const starter = players[0].username;
+      // Use explicit starter information from backend
+      const starter = starterName || players[0].username;
 
       // store game session info
       sessionStorage.setItem("tossWinner", starter);
@@ -53,7 +56,7 @@ const Toss = () => {
     } catch (err) {
       console.error(err);
       setFlipping(false);
-      alert(err?.response?.data?.message || "Failed to start toss/game");
+      error(err?.response?.data?.message || "Failed to start toss/game");
       navigate("/");
     }
   };

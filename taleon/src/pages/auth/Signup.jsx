@@ -157,9 +157,8 @@ const Signup = () => {
             <hr className="flex-grow border-[#333]" />
           </div>
 
-          <button
-            type="button"
-            onClick={() => alert("Google Sign-In (Backend pending)")}
+          <a
+            href="http://localhost:5000/auth/google"
             className="w-full flex items-center justify-center gap-3 font-orbitron px-5 py-2 rounded-md bg-white text-black transition duration-300 hover:shadow-[0_0_18px_#fff,0_0_30px_#fff]"
           >
             <img
@@ -168,7 +167,7 @@ const Signup = () => {
               className="w-5 h-5"
             />
             Sign in with Google
-          </button>
+          </a>
 
           <p className="mt-4 text-sm text-[#aaa] text-center">
             Already have an account?{" "}

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../components/UI/Toast";
 import axios from "axios";
-import { io } from "socket.io-client";
+import { connectSocket, joinRoom } from "../../utils/socket.js";
 
 const Lobby = () => {
   const navigate = useNavigate();
+  const { error } = useToast();
   const [roomCode, setRoomCode] = useState("----");
   const [players, setPlayers] = useState([]);
 
@@ -21,7 +23,7 @@ const Lobby = () => {
 
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     if (!user?.token) {
-      alert("You must be logged in.");
+      error("You must be logged in.");
       navigate("/login");
       return;
     }
@@ -41,13 +43,19 @@ const Lobby = () => {
       })
       .catch((err) => {
         console.error(err);
-        alert("Failed to load room data");
+        error("Failed to load room data");
         navigate("/");
       });
 
-    // connect to socket
-    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000");
-    socket.emit("joinRoom", { roomCode: code, username: playerName });
+    // connect to socket with authentication
+    const socket = connectSocket();
+    
+    // Join room with authentication
+    if (!joinRoom(code, playerName)) {
+      error("Failed to join room. Please try again.");
+      navigate("/");
+      return;
+    }
 
     socket.on("playerJoined", (data) => {
       console.log("Player joined:", data);

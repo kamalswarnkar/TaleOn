@@ -13,6 +13,7 @@ const Judgement = () => {
     vibe: "--",
     immersion: "--",
   });
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     let storedStory = [];
@@ -43,7 +44,7 @@ const Judgement = () => {
           if (typeof entry.user === "object") {
             playerName = entry.user.username || entry.user.name || entry.user._id || "Player";
           } else {
-            playerName = entry.user;
+            playerName = entry.player;
           }
         }
         
@@ -54,14 +55,48 @@ const Judgement = () => {
 
       return { player: playerName, text };
     });
+    
+    console.log("[JUDGEMENT] Normalized story:", normalizedStory);
 
     setStory(normalizedStory);
+
+    // ✅ Check if we already have a verdict stored (prevents refresh vulnerability)
+    const storedVerdict = sessionStorage.getItem("gameResult");
+    const storedScores = sessionStorage.getItem("gameScores");
+    
+    if (storedVerdict && storedScores) {
+      console.log("[JUDGEMENT] Using stored verdict:", storedVerdict);
+      // Use stored verdict to prevent refresh vulnerability
+      setVerdict(storedVerdict);
+      try {
+        setScores(JSON.parse(storedScores));
+      } catch {
+        setScores({
+          flow: "3/5",
+          creativity: "3/5",
+          vibe: "3/5",
+          immersion: "3/5",
+        });
+      }
+      setHasFetched(true);
+      return; // Don't fetch again if we have stored result
+    }
+    
+    // Prevent multiple fetches
+    if (hasFetched) {
+      console.log("[JUDGEMENT] Already fetched, skipping");
+      return;
+    }
+    
+    console.log("[JUDGEMENT] No stored verdict found, fetching from backend");
 
     const roomCode = sessionStorage.getItem("roomCode");
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
     const fetchJudgement = async () => {
       try {
+        console.log("[JUDGEMENT] Sending story to backend:", normalizedStory);
+        
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/judgement`,
           { roomCode, story: normalizedStory },
@@ -69,23 +104,35 @@ const Judgement = () => {
         );
 
         const { verdict, scores } = res.data || {};
+        console.log("[JUDGEMENT] Backend response:", { verdict, scores });
+        
         if (verdict && scores) {
+          console.log("[JUDGEMENT] Setting verdict:", verdict);
           setVerdict(verdict);
           setScores(scores);
+          setHasFetched(true);
+          // ✅ Store both verdict and scores to prevent refresh vulnerability
           sessionStorage.setItem("gameResult", verdict);
+          sessionStorage.setItem("gameScores", JSON.stringify(scores));
         } else {
           throw new Error("Invalid response from /game/judgement");
         }
       } catch (err) {
         console.error("Judgement failed:", err);
-        setVerdict("LOSE");
-        setScores({
+        const fallbackVerdict = "LOSE";
+        const fallbackScores = {
           flow: "2/5",
           creativity: "2/5",
           vibe: "2/5",
           immersion: "2/5",
-        });
-        sessionStorage.setItem("gameResult", "LOSE");
+        };
+        console.log("[JUDGEMENT] Setting fallback verdict:", fallbackVerdict);
+        setVerdict(fallbackVerdict);
+        setScores(fallbackScores);
+        setHasFetched(true);
+        // ✅ Store fallback results too
+        sessionStorage.setItem("gameResult", fallbackVerdict);
+        sessionStorage.setItem("gameScores", JSON.stringify(fallbackScores));
       }
     };
 
@@ -182,13 +229,35 @@ const Judgement = () => {
           </div>
         </div>
 
-        {/* Continue Button */}
-        <button
-          onClick={goToRoast}
-          className="mt-6 font-orbitron text-base px-6 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
-        >
-          Continue to Roast
-        </button>
+        {/* Action Buttons */}
+        <div className="mt-6 flex gap-4 justify-center">
+          <button
+            onClick={goToRoast}
+            className="font-orbitron text-base px-6 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+          >
+            Continue to Roast
+          </button>
+          
+          {/* ✅ Clear stored verdict (for testing/debugging) */}
+          <button
+            onClick={() => {
+              sessionStorage.removeItem("gameResult");
+              sessionStorage.removeItem("gameScores");
+              setHasFetched(false);
+              setVerdict(null);
+              setScores({
+                flow: "--",
+                creativity: "--",
+                vibe: "--",
+                immersion: "--",
+              });
+              window.location.reload();
+            }}
+            className="font-orbitron text-base px-4 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]"
+          >
+            Reset Judgement
+          </button>
+        </div>
       </div>
     </div>
   );
