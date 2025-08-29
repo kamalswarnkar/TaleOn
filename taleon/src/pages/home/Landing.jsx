@@ -66,30 +66,43 @@ const Landing = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-[#111] border border-[#00c3ff] rounded-lg shadow-[0_0_20px_#00c3ff] p-6 max-w-md w-full">
             <h3 className="font-orbitron text-xl text-[#00c3ff] mb-4">
-              Rejoin Session?
+              {rejoinData.completedGame ? "Game Completed" : "Rejoin Session?"}
             </h3>
-                         <p className="text-[#ccc] mb-6">
-               You have an active {rejoinData.type === "game" ? "game" : "room"} session. 
-               Would you like to rejoin?
-             </p>
-             {rejoinData.reason && (
-               <p className="text-[#ff6b6b] text-sm mb-4">
-                 Note: {rejoinData.reason}
-               </p>
-             )}
+            <p className="text-[#ccc] mb-6">
+              {rejoinData.completedGame
+                ? "Your previous game session has been completed."
+                : `You have an active ${rejoinData.type === "game" ? "game" : "room"} session. Would you like to rejoin?`
+              }
+            </p>
+            {rejoinData.reason && (
+              <p className="text-[#ff6b6b] text-sm mb-4">
+                {rejoinData.reason}
+              </p>
+            )}
             <div className="flex gap-3">
-              <button
-                onClick={handleRejoin}
-                className="flex-1 font-orbitron text-base px-4 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
-              >
-                Rejoin
-              </button>
-              <button
-                onClick={handleDismissRejoin}
-                className="flex-1 font-orbitron text-base px-4 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]"
-              >
-                Dismiss
-              </button>
+              {!rejoinData.completedGame ? (
+                <>
+                  <button
+                    onClick={handleRejoin}
+                    className="flex-1 font-orbitron text-base px-4 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+                  >
+                    Rejoin
+                  </button>
+                  <button
+                    onClick={handleDismissRejoin}
+                    className="flex-1 font-orbitron text-base px-4 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]"
+                  >
+                    Dismiss
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleDismissRejoin}
+                  className="w-full font-orbitron text-base px-4 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+                >
+                  Start New Game
+                </button>
+              )}
             </div>
           </div>
         </div>

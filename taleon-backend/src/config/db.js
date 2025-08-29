@@ -8,11 +8,11 @@ const connectDB = async () => {
     console.log('MONGO_URI:', process.env.MONGO_URI ? '✅ Found' : '❌ Missing');
     console.log('All env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
     
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not set. Please check your .env file.');
+    if (!process.env.MONGO_URI) {
+      throw new Error('MONGO_URI environment variable is not set. Please check your .env file.');
     }
     
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB Connected');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);

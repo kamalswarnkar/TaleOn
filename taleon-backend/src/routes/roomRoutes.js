@@ -79,13 +79,28 @@ router.post("/join", protect, async (req, res) => {
       }
     }
 
-    res.json({
-      message: "Joined room successfully",
-      roomCode: room.roomCode,
-      players: room.players,
-      playerName: playerName || req.user.username,
-      hasActiveGame: !!room.game
-    });
+    let activeGameData = null;
+if (room.game) {
+  const Game = (await import("../models/Game.js")).default;
+  const game = await Game.findById(room.game);
+  if (game && game.isActive) {
+    activeGameData = {
+      gameId: game._id,
+      title: game.title,
+      genre: game.genre,
+      currentTurnIndex: game.currentTurnIndex,
+    };
+  }
+}
+
+res.json({
+  message: "Joined room successfully",
+  roomCode: room.roomCode,
+  players: room.players,
+  playerName: playerName || req.user.username,
+  activeGame: activeGameData, // ✅ send back active game info
+});
+
   } catch (error) {
     res.status(500).json({ message: "Error joining room", error: error.message });
   }

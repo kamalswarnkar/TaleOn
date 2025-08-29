@@ -24,7 +24,7 @@ const createTransporter = () => {
   }
   
   try {
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransporter({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -47,9 +47,10 @@ const createTransporter = () => {
 const sendEmail = async (options) => {
   const transporter = createTransporter();
   
-  // If email is not configured, throw error to prevent silent failure
+  // If email is not configured, return success but log warning
   if (!transporter) {
-    throw new Error('Email transporter not configured. Please check EMAIL_USER and EMAIL_PASS in .env file');
+    console.warn(`[EMAIL] Email not sent to ${options.email} - email not configured`);
+    return;
   }
   
   const message = {
@@ -155,12 +156,7 @@ export const forgotPassword = async (req, res) => {
 
       await user.save({ validateBeforeSave: false });
 
-      return res.status(500).json({ 
-        message: 'Email could not be sent', 
-        error: err.message,
-        details: 'Check your email configuration in .env file',
-        troubleshooting: 'Verify EMAIL_USER, EMAIL_PASS, FROM_NAME, and FROM_EMAIL are set correctly'
-      });
+      return res.status(500).json({ message: 'Email could not be sent' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

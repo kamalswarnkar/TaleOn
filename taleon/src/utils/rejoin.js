@@ -12,23 +12,62 @@ export const checkAndRejoinSession = async () => {
   }
   
   try {
-    // Check if user has an active room
+    // Check if user has an active game first (higher priority)
+    if (gameId) {
+      const gameResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/${gameId}`,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      if (gameResponse.data) {
+        // Check if user is still a player in this game
+        const isPlayer = gameResponse.data.players.some(
+          player => player._id === user._id || player === user._id
+        );
+
+        if (isPlayer) {
+          if (gameResponse.data.isActive) {
+            // Game is active, can rejoin
+            return {
+              canRejoin: true,
+              type: "game",
+              data: gameResponse.data,
+              redirectTo: "/game-room"
+            };
+          } else {
+            // Game is completed, clear session and show appropriate message
+            clearGameData();
+            return {
+              canRejoin: false,
+              reason: "Game is already finished, start a new game!",
+              completedGame: true
+            };
+          }
+        } else {
+          // User is not a player anymore, clear the session data
+          clearGameData();
+          return { canRejoin: false, reason: "No longer a player in this game" };
+        }
+      }
+    }
+
+    // Check if user has an active room (fallback)
     if (roomCode) {
       const roomResponse = await axios.get(
         `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/${roomCode}`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
-      
+
       if (roomResponse.data && roomResponse.data.isActive) {
         // Check if user is still a member of this room
         const isMember = roomResponse.data.players.some(
           player => player._id === user._id || player === user._id
         );
-        
+
         if (isMember) {
-          return { 
-            canRejoin: true, 
-            type: "room", 
+          return {
+            canRejoin: true,
+            type: "room",
             data: roomResponse.data,
             redirectTo: "/lobby"
           };
@@ -36,34 +75,6 @@ export const checkAndRejoinSession = async () => {
           // User is not a member anymore, clear the session data
           clearGameData();
           return { canRejoin: false, reason: "No longer a member of this room" };
-        }
-      }
-    }
-    
-    // Check if user has an active game
-    if (gameId) {
-      const gameResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/${gameId}`,
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      
-      if (gameResponse.data && gameResponse.data.isActive) {
-        // Check if user is still a player in this game
-        const isPlayer = gameResponse.data.players.some(
-          player => player._id === user._id || player === user._id
-        );
-        
-        if (isPlayer) {
-          return { 
-            canRejoin: true, 
-            type: "game", 
-            data: gameResponse.data,
-            redirectTo: "/game-room"
-          };
-        } else {
-          // User is not a player anymore, clear the session data
-          clearGameData();
-          return { canRejoin: false, reason: "No longer a player in this game" };
         }
       }
     }

@@ -113,166 +113,184 @@ async function generateGameMeta() {
 }
 
 /* ============================================================
-   Judgement AI
+   Judgement AI (Two-Phase via AI Itself)
+   with Smart Gibberish Detection + Contextual Fallback
    ============================================================ */
+
+function isGibberishText(text) {
+  if (!text) return true;
+
+  const clean = text.trim();
+
+  // Too short
+  if (clean.length < 3) return true;
+
+  // Only numbers/symbols
+  if (/^[^a-zA-Z]+$/.test(clean)) return true;
+
+  // Detect random short combos (3–5 letters)
+  if (/^[a-z]{3,5}$/i.test(clean)) {
+    const blacklist = ["asd", "qwe", "zxc", "dfg", "ghj", "jkl", "dcx", "acs"];
+    if (blacklist.includes(clean.toLowerCase())) return true;
+
+    // reject if no vowels
+    if (clean.length <= 4 && !/[aeiou]/i.test(clean)) return true;
+  }
+
+  // Repeated junk patterns (aaa, abab, etc.)
+  if (/^([a-z])\1{2,}$/i.test(clean)) return true;
+  if (/^(..)\1{2,}$/i.test(clean)) return true;
+
+  return false;
+}
+
 async function judgeStory({ story }) {
-  // ✅ Extract only HUMAN player contributions (exclude AI_Buddy)
+  // ✅ Extract only HUMAN player contributions
   const humanEntries = story.filter(s => {
     const playerName = typeof s === "object" ? (s.player || "") : "";
     return playerName !== "AI_Buddy" && playerName !== "AI";
   });
-  
-  const humanText = humanEntries.map(s => (typeof s === "string" ? s : (s.text || s.content || ""))).join("\n");
-  
-  console.log(`[JUDGE] Judging HUMAN contributions only`);
-  console.log(`[JUDGE] Total story entries: ${story.length}, Human entries: ${humanEntries.length}`);
-  console.log(`[JUDGE] Human content:`, humanText.substring(0, 200) + "...");
-  
-  // If no human content, return LOSE
-  if (!humanText.trim()) {
-    console.log(`[JUDGE] No human content found, returning LOSE`);
+
+  const humanTexts = humanEntries.map(s =>
+    typeof s === "string" ? s : (s.text || s.content || "")
+  );
+
+  const humanTextJoined = humanTexts.join("\n");
+
+  const completeStory = story
+    .map(s => (typeof s === "string" ? s : (s.text || s.content || "")))
+    .join("\n");
+
+  console.log(`[JUDGE] Running judgement...`);
+  console.log(`[JUDGE] Human content:`, humanTextJoined.substring(0, 200) + "...");
+  console.log(`[JUDGE] Full story length: ${completeStory.length}`);
+
+  /* ============================================================
+     STEP 1: Hard gibberish check (auto-LOSE outside AI)
+     ============================================================ */
+  const allGibberish = humanTexts.every(txt => isGibberishText(txt));
+  if (allGibberish) {
+    console.log("[JUDGE] All human inputs are gibberish → auto LOSE");
     return {
       verdict: "LOSE",
-      scores: { flow: "1/5", creativity: "1/5", vibe: "1/5", immersion: "1/5" }
-    };
-  }
-  
-  const flat = humanText; // Use only human text for judgement
-
-  // Basic validation - only reject obviously bad content
-  const wordCount = flat.split(' ').length;
-  const hasMinimalContent = wordCount < 5; // Very lenient - only 5 words minimum
-  const isCompletelyEmpty = flat.trim().length === 0;
-  
-  if (isCompletelyEmpty) {
-    console.log(`[JUDGE] Story is completely empty, returning LOSE`);
-    return {
-      verdict: "LOSE",
-      scores: { flow: "1/5", creativity: "1/5", vibe: "1/5", immersion: "1/5" }
+      source: "HUMAN_FILTER",
+      scores: {
+        flow: "1/5",
+        creativity: "1/5",
+        vibe: "1/5",
+        immersion: "1/5"
+      }
     };
   }
 
-               const messages = [
-  {
-    role: "system",
-    content:
-      "You are a STRICT and FAIR judge for a collaborative story game. " +
-      "Evaluate the FINAL STORY as a whole (all turns: human + AI together). " +
-      "Apply these rules:\n" +
-      "- Automatic LOSE if the story is mostly nonsense, random letters, or gibberish.\n" +
-      "- Automatic LOSE if the story is just refusals, meta-talk (e.g., 'I cannot continue', 'please provide context'), or meaningless filler.\n" +
-      "- Automatic LOSE if the story is extremely short (< 20 words total).\n" +
-      "- Otherwise, score fairly on the 1–5 scale for Flow, Creativity, Vibe, and Immersion.\n" +
-      "- Use the FULL range (1 = terrible, 5 = excellent).\n\n" +
-      "Return ONLY JSON like:\n" +
-      '{"verdict":"WIN","scores":{"flow":"3/5","creativity":"4/5","vibe":"3/5","immersion":"3/5"}}'
-  },
-  {
-    role: "user",
-    content: "Here is the final story to judge:\n\n" + story.map(s => (typeof s === "string" ? s : (s.text || s.content || ""))).join("\n")
-  }
-];
+  /* ============================================================
+     STEP 2: Ask AI to judge normally
+     ============================================================ */
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a judge for a storytelling game. Decide WIN or LOSE.\n\n" +
+        "WIN if: Story has creativity, plot, characters, or effort\n" +
+        "LOSE if: Empty, gibberish, random codes, or meaningless\n\n" +
+        "Return ONLY this JSON format:\n" +
+        '{"verdict":"WIN","scores":{"flow":"3/5","creativity":"3/5","vibe":"3/5","immersion":"3/5"}}'
+    },
+    {
+      role: "user",
+      content:
+        "Judge this story:\n\n" + completeStory + "\n\n" +
+        "Is it creative and engaging? Return WIN or LOSE with scores."
+    }
+  ];
 
-
-  const raw = await callGroqAI(messages, "llama-3.1-8b-instant", 150, 0.7); // Slightly higher temperature for more varied responses
+  const raw = await callGroqAI(messages, "llama-3.1-8b-instant", 200, 0.5);
   console.log(`[JUDGE] Raw AI response:`, raw);
 
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed?.verdict && parsed?.scores) {
-      console.log(`[JUDGE] Successfully parsed verdict:`, parsed.verdict);
-      
-      // Only apply minimal validation - be very lenient
-      const scores = parsed.scores;
-      const totalScore = Object.values(scores).reduce((sum, score) => {
-        const num = parseInt(score.split('/')[0]);
-        return sum + (isNaN(num) ? 0 : num);
-      }, 0);
-      
-      // Additional validation for gibberish and poor content
-      const hasGibberish = /[^a-zA-Z0-9\s.,!?-]/.test(flat) && (flat.includes('...') || flat.includes('---') || flat.includes('***'));
-      const isTooShort = flat.length < 20; // Require at least 20 characters
-      const hasRepetitiveText = /(\b\w+\b)(?:\s+\1){2,}/.test(flat); // 2+ repetitions
-      const hasRandomWords = /\b(?:the|and|or|but|in|on|at|to|for|of|with|by)\b.*\b(?:the|and|or|but|in|on|at|to|for|of|with|by)\b.*\b(?:the|and|or|but|in|on|at|to|for|of|with|by)\b/.test(flat);
-      const hasMinimalContent = flat.split(' ').length < 6; // At least 6 words
-      const hasSingleWords = /^\s*\w+\s*$/.test(flat.trim()); // Just single words
-      
-      // If story shows quality issues, adjust scores and potentially force LOSE
-      if (hasGibberish || isTooShort || hasRepetitiveText || hasRandomWords || hasMinimalContent || hasSingleWords) {
-        console.log(`[JUDGE] Story quality issues detected, making adjustments`);
-        
-        // Reduce scores for quality issues
-        parsed.scores = {
-          flow: Math.max(1, parseInt(parsed.scores.flow) - 1) + "/5",
-          creativity: Math.max(1, parseInt(parsed.scores.creativity) - 1) + "/5",
-          vibe: Math.max(1, parseInt(parsed.scores.vibe) - 1) + "/5",
-          immersion: Math.max(1, parseInt(parsed.scores.immersion) - 1) + "/5"
-        };
-        
-        // Recalculate total score
-        const newTotalScore = Object.values(parsed.scores).reduce((sum, score) => {
-          const num = parseInt(score.split('/')[0]);
-          return sum + (isNaN(num) ? 0 : num);
-        }, 0);
-        
-        // Force LOSE for very poor content
-        if (newTotalScore <= 8 || hasGibberish || hasSingleWords) {
-          console.log(`[JUDGE] Poor content detected, forcing LOSE`);
-          parsed.verdict = "LOSE";
-        }
-      }
-      
-      // Only force LOSE for extremely low scores (very rare)
-      if (totalScore <= 4) {
-        console.log(`[JUDGE] Extremely low scores detected, forcing LOSE`);
-        parsed.verdict = "LOSE";
-      }
-      
-      // If AI gave WIN but scores are reasonable, trust the AI
-      if (parsed.verdict === "WIN" && totalScore >= 8) {
-        console.log(`[JUDGE] AI gave WIN with reasonable scores, accepting verdict`);
-        return parsed;
-      }
-      
-      // If AI gave LOSE but scores are decent, reconsider
-      if (parsed.verdict === "LOSE" && totalScore >= 12) {
-        console.log(`[JUDGE] AI gave LOSE but scores are decent, reconsidering to WIN`);
-        parsed.verdict = "WIN";
-      }
-      
-      return parsed;
-    }
-  } catch (error) {
-    console.warn("[judgeStory] Non-JSON response:", raw);
-    console.warn("[judgeStory] Parse error:", error.message);
+  /* ============================================================
+     STEP 3: JSON Parse + Repair
+     ============================================================ */
+  const tryParse = (txt) => {
+    try {
+      const parsed = JSON.parse(txt);
+      if (parsed?.verdict && parsed?.scores) return parsed;
+    } catch {}
+    return null;
+  };
+
+  let result = tryParse(raw);
+
+  if (!result) {
+    const match = raw?.match(/\{[\s\S]*\}/);
+    if (match) result = tryParse(match[0]);
   }
 
-  // Fallback: be balanced - check for obvious quality issues
-  if (hasMinimalContent || flat.length < 20) {
-    console.log(`[JUDGE] Fallback: Human content has minimal content, returning LOSE`);
+  if (!result && raw) {
+    const cleaned = raw
+      .replace(/(\r\n|\n|\r)/gm, " ")
+      .replace(/,\s*}/g, "}")
+      .replace(/,\s*]/g, "]");
+    result = tryParse(cleaned);
+  }
+
+  if (result) {
+    console.log(`[JUDGE] Parsed verdict:`, result.verdict);
+    return { ...result, source: "AI" };
+  }
+
+  /* ============================================================
+     STEP 4: Contextual Fallback
+     ============================================================ */
+  console.log("[JUDGE] AI failed to return valid JSON, using fallback");
+
+  if (!humanTextJoined.trim()) {
     return {
       verdict: "LOSE",
-      scores: { flow: "2/5", creativity: "2/5", vibe: "2/5", immersion: "2/5" }
+      source: "FALLBACK",
+      scores: {
+        flow: "1/5",
+        creativity: "1/5",
+        vibe: "1/5",
+        immersion: "1/5"
+      }
     };
   }
-  
-  // Check for gibberish patterns in fallback
-  const hasGibberishPatterns = /[^a-zA-Z0-9\s.,!?-]/.test(flat) && (flat.includes('...') || flat.includes('---') || flat.includes('***'));
-  if (hasGibberishPatterns) {
-    console.log(`[JUDGE] Fallback: Human content has gibberish, returning LOSE`);
+
+  // For fallback, make a simple content-based decision
+  const hasAnyContent = humanTextJoined.trim().length > 0;
+  const hasMinimalContent = humanTextJoined.trim().length < 20;
+
+  if (!hasAnyContent) {
     return {
       verdict: "LOSE",
-      scores: { flow: "1/5", creativity: "1/5", vibe: "1/5", immersion: "1/5" }
+      source: "FALLBACK",
+      scores: {
+        flow: "1/5",
+        creativity: "1/5",
+        vibe: "1/5",
+        immersion: "1/5"
+      }
     };
   }
-  
-  // Default to WIN for reasonable human content
-  console.log(`[JUDGE] Fallback: Defaulting to WIN for reasonable human content`);
+
+  // For minimal content, assume LOSE; for substantial content, assume WIN
   return {
-    verdict: "WIN",
-    scores: { flow: "3/5", creativity: "3/5", vibe: "3/5", immersion: "3/5" }
+    verdict: hasMinimalContent ? "LOSE" : "WIN",
+    source: "FALLBACK",
+    scores: hasMinimalContent ? {
+      flow: "2/5",
+      creativity: "2/5",
+      vibe: "2/5",
+      immersion: "2/5"
+    } : {
+      flow: "3/5",
+      creativity: "3/5",
+      vibe: "3/5",
+      immersion: "3/5"
+    }
   };
 }
+
 
 /* ============================================================
    Helpers

@@ -60,26 +60,36 @@ const Judgement = () => {
 
     setStory(normalizedStory);
 
-    // ✅ Check if we already have a verdict stored (prevents refresh vulnerability)
-    const storedVerdict = sessionStorage.getItem("gameResult");
-    const storedScores = sessionStorage.getItem("gameScores");
-    
-    if (storedVerdict && storedScores) {
-      console.log("[JUDGEMENT] Using stored verdict:", storedVerdict);
-      // Use stored verdict to prevent refresh vulnerability
-      setVerdict(storedVerdict);
+    // ✅ Check if we already have a verdict stored for THIS SPECIFIC GAME
+    const currentRoomCode = sessionStorage.getItem("roomCode");
+    const currentGameId = sessionStorage.getItem("gameId");
+    const cacheKey = currentRoomCode ? `judgement_${currentRoomCode}` : `judgement_${currentGameId}`;
+
+    const storedData = sessionStorage.getItem(cacheKey);
+
+    if (storedData) {
       try {
-        setScores(JSON.parse(storedScores));
+        const { verdict: storedVerdict, scores: storedScores, timestamp } = JSON.parse(storedData);
+
+        // Check if cache is recent (within 5 minutes) to prevent stale data
+        const isRecent = timestamp && (Date.now() - timestamp) < 300000;
+
+        if (storedVerdict && storedScores && isRecent) {
+          console.log("[JUDGEMENT] Using cached verdict for game:", cacheKey);
+          setVerdict(storedVerdict);
+          setScores(storedScores);
+          setHasFetched(true);
+          return; // Don't fetch again if we have valid cached result
+        } else {
+          // Clear stale cache
+          sessionStorage.removeItem(cacheKey);
+          console.log("[JUDGEMENT] Cleared stale cache for:", cacheKey);
+        }
       } catch {
-        setScores({
-          flow: "3/5",
-          creativity: "3/5",
-          vibe: "3/5",
-          immersion: "3/5",
-        });
+        // Clear corrupted cache
+        sessionStorage.removeItem(cacheKey);
+        console.log("[JUDGEMENT] Cleared corrupted cache for:", cacheKey);
       }
-      setHasFetched(true);
-      return; // Don't fetch again if we have stored result
     }
     
     // Prevent multiple fetches
@@ -111,9 +121,20 @@ const Judgement = () => {
           setVerdict(verdict);
           setScores(scores);
           setHasFetched(true);
-          // ✅ Store both verdict and scores to prevent refresh vulnerability
-          sessionStorage.setItem("gameResult", verdict);
-          sessionStorage.setItem("gameScores", JSON.stringify(scores));
+
+          // ✅ Store verdict and scores with game-specific cache key and timestamp
+          const cacheData = {
+            verdict,
+            scores,
+            timestamp: Date.now(),
+            roomCode: currentRoomCode,
+            gameId: currentGameId
+          };
+          sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+
+          // ✅ Also clear any old generic cache keys to prevent conflicts
+          sessionStorage.removeItem("gameResult");
+          sessionStorage.removeItem("gameScores");
         } else {
           throw new Error("Invalid response from /game/judgement");
         }
@@ -130,9 +151,20 @@ const Judgement = () => {
         setVerdict(fallbackVerdict);
         setScores(fallbackScores);
         setHasFetched(true);
-        // ✅ Store fallback results too
-        sessionStorage.setItem("gameResult", fallbackVerdict);
-        sessionStorage.setItem("gameScores", JSON.stringify(fallbackScores));
+
+        // ✅ Store fallback results with game-specific cache
+        const fallbackCacheData = {
+          verdict: fallbackVerdict,
+          scores: fallbackScores,
+          timestamp: Date.now(),
+          roomCode: currentRoomCode,
+          gameId: currentGameId
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(fallbackCacheData));
+
+        // ✅ Clear old generic cache keys
+        sessionStorage.removeItem("gameResult");
+        sessionStorage.removeItem("gameScores");
       }
     };
 
@@ -241,8 +273,16 @@ const Judgement = () => {
           {/* ✅ Clear stored verdict (for testing/debugging) */}
           <button
             onClick={() => {
+              // Clear game-specific cache
+              const currentRoomCode = sessionStorage.getItem("roomCode");
+              const currentGameId = sessionStorage.getItem("gameId");
+              const currentCacheKey = currentRoomCode ? `judgement_${currentRoomCode}` : `judgement_${currentGameId}`;
+
+              sessionStorage.removeItem(currentCacheKey);
+              // Also clear old generic keys for backward compatibility
               sessionStorage.removeItem("gameResult");
               sessionStorage.removeItem("gameScores");
+
               setHasFetched(false);
               setVerdict(null);
               setScores({
