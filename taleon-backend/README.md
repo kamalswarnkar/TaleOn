@@ -177,6 +177,7 @@ src/
 ├── server.js             # Server entry point
 ├── config/
 │   └── db.js            # Database connection
+│   ├── passport.js 
 ├── controllers/
 │   └── authController.js # Authentication logic
 ├── middleware/
