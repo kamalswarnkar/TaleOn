@@ -18,12 +18,14 @@ import Error from './pages/misc/Error'
 import { Routes, Route } from 'react-router-dom'
 import MainLayout from './components/Layout/MainLayout'
 import { ToastProvider } from './components/UI/Toast'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function App() {
 
   return (
-    <ToastProvider>
-      <Routes>
+    <ErrorBoundary>
+      <ToastProvider>
+        <Routes>
         {/* Landing */}
         <Route path="/" element={<Landing />} />
 
@@ -83,8 +85,9 @@ function App() {
 
         {/* Catch-all */}
         <Route path="*" element={<Error />} />
-      </Routes>
-    </ToastProvider>
+        </Routes>
+      </ToastProvider>
+    </ErrorBoundary>
   )
 }
 
