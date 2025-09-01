@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roast Time - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0a0a0a] text-white font-inter text-center">
+
+  <div class="max-w-[700px] mx-auto p-5">
+    <!-- Title -->
+    <h1 class="font-orbitron text-[2.5rem] tracking-[2px] text-[#00c3ff]" 
+        style="text-shadow:0 0 10px #00c3ff,0 0 20px #00c3ff;">
+      AI <span class="text-[#ff006f]" style="text-shadow:0 0 10px #ff006f,0 0 20px #ff006f;">Roast</span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="mb-5 text-[#ccc] italic">No one leaves unscathed...</p>
+
+    <!-- Roast List -->
+    <div id="roastList" 
+         class="text-left bg-white/5 p-4 rounded-lg border border-[#00c3ff] shadow-[0_0_10px_#00c3ff] mb-8"></div>
+
+    <!-- Buttons -->
+    <div class="flex flex-wrap justify-center gap-3">
+      <button onclick="playAgain()" 
+              class="font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+        Play Again
+      </button>
+      <button onclick="goHome()" 
+              class="font-orbitron text-base px-5 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]">
+        Exit
+      </button>
+      <button onclick="goArchive()"
+              class="font-orbitron text-base px-5 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]">
+        View Archive
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Get players & result
+    let players = JSON.parse(sessionStorage.getItem("players")) || [
+      sessionStorage.getItem("playerName") || "Player",
+      "AI_Buddy"
+    ];
+    let result = sessionStorage.getItem("gameResult") || "LOSE";
+
+    // Roast pools
+    let winRoasts = [
+      "Your plot twist made no sense... but it was so good I almost cried.",
+      "You kept the story alive, even if your grammar didn't.",
+      "That was so weird, I loved it.",
+      "Your part was like fine wine... except served in a plastic cup."
+    ];
+
+    let loseRoasts = [
+      "Your plot twist was so bad, even plot holes avoided it.",
+      "I’ve seen more coherent stories in a toddler’s doodle book.",
+      "If storytelling was a crime, you'd be sentenced to silence.",
+      "Your scene was the narrative equivalent of a Windows XP error."
+    ];
+
+    const roastList = document.getElementById("roastList");
+
+    // Display player-specific roasts
+    players.forEach(player => {
+      if (player === "AI_Buddy") return; // Skip AI
+
+      let div = document.createElement("div");
+      div.className = "mb-2 pb-2 border-b border-white/10 last:border-b-0";
+
+      let nameSpan = document.createElement("span");
+      nameSpan.className = "font-bold text-[#00c3ff]";
+      nameSpan.textContent = player + ": ";
+
+      let roastText = document.createElement("span");
+      roastText.textContent = result === "WIN"
+        ? winRoasts[Math.floor(Math.random() * winRoasts.length)]
+        : loseRoasts[Math.floor(Math.random() * loseRoasts.length)];
+
+      div.appendChild(nameSpan);
+      div.appendChild(roastText);
+      roastList.appendChild(div);
+    });
+
+    function playAgain() {
+      window.location.href = "lobby.html";
+    }
+
+    function goHome() {
+      window.location.href = "landing.html";
+    }
+
+    function goArchive() {
+      window.location.href = "archive.html";
+    }
+  </script>
+</body>
+</html>

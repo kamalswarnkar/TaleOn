@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Room - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          },
+          colors: {
+            neonBlue: '#00c3ff',
+            neonPink: '#ff006f'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Autofill fix for dark mode inputs */
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+      -webkit-text-fill-color: #fff !important;
+      border: 2px solid #00c3ff !important;
+      caret-color: #fff !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    input:-webkit-autofill:focus {
+      border: 2px solid #ff006f !important;
+      -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset, 0 0 10px #ff006f !important;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center">
+
+  <div class="max-w-[500px] mx-auto p-8">
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-[2.8rem] tracking-[2px] text-neonBlue"
+        style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+      Create <span class="text-neonPink" style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;">Room</span>
+    </h1>
+
+    <!-- Player Name -->
+    <div class="my-5 text-left">
+      <label for="playerName" class="block font-bold mb-1 text-[#ccc]">Your Name</label>
+      <input type="text" id="playerName" placeholder="Enter your name"
+             class="w-full p-2 border-2 border-neonBlue bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-neonPink focus:shadow-[0_0_10px_#ff006f]">
+    </div>
+
+    <!-- Max Rounds -->
+    <div class="my-5 text-left">
+      <label for="maxRounds" class="block font-bold mb-1 text-[#ccc]">Max Rounds</label>
+      <input type="number" id="maxRounds" placeholder="e.g. 5" min="1" max="20"
+             class="w-full p-2 border-2 border-neonBlue bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-neonPink focus:shadow-[0_0_10px_#ff006f]">
+    </div>
+
+    <!-- Turn Time -->
+    <div class="my-5 text-left">
+      <label for="turnTime" class="block font-bold mb-1 text-[#ccc]">Turn Time (minutes)</label>
+      <input type="number" id="turnTime" placeholder="e.g. 10" min="1" max="60"
+             class="w-full p-2 border-2 border-neonBlue bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-neonPink focus:shadow-[0_0_10px_#ff006f]">
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex flex-wrap justify-center gap-3 mt-8">
+      <button onclick="createRoom()"
+              class="font-[Orbitron] text-base px-5 py-2 rounded-md bg-neonBlue text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+        Create Room
+      </button>
+      <button onclick="goBack()"
+              class="font-[Orbitron] text-base px-5 py-2 rounded-md bg-neonPink text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]">
+        Back
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function createRoom() {
+      const name = document.getElementById("playerName").value.trim();
+      const maxRounds = document.getElementById("maxRounds").value.trim();
+      const turnTime = document.getElementById("turnTime").value.trim();
+
+      if (!name || !maxRounds || !turnTime) {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      // Generate random room code
+      const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      sessionStorage.setItem("playerName", name);
+      sessionStorage.setItem("maxRounds", maxRounds);
+      sessionStorage.setItem("turnTime", turnTime);
+      sessionStorage.setItem("roomCode", roomCode);
+
+      window.location.href = "lobby.html";
+    }
+
+    function goBack() {
+      window.location.href = "landing.html";
+    }
+  </script>
+</body>
+</html>

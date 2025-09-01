@@ -1,0 +1,91 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #0a0a0a;
+    color: #fff;
+    text-align: center;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    color: #00c3ff;
+    text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;
+}
+
+.title span {
+    color: #ff006f;
+    text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;
+}
+
+.verdict-box {
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid #00c3ff;
+    box-shadow: 0 0 20px #00c3ff;
+    width: fit-content;
+}
+
+.verdict-box.win {
+    border-color: #00ff9f;
+    box-shadow: 0 0 20px #00ff9f;
+    color: #00ff9f;
+}
+
+.verdict-box.lose {
+    border-color: #ff003c;
+    box-shadow: 0 0 20px #ff003c;
+    color: #ff003c;
+}
+
+.criteria {
+    text-align: left;
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+.story-review {
+    margin-top: 30px;
+    text-align: left;
+    border-top: 1px solid #333;
+    padding-top: 15px;
+}
+
+.story-review h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00c3ff;
+    margin-bottom: 10px;
+}
+
+#storyContent {
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+button {
+    margin-top: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    padding: 8px 20px;
+    border: none;
+    background-color: #00c3ff;
+    color: #000;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    box-shadow: 0 0 15px #00c3ff, 0 0 25px #00c3ff;
+}

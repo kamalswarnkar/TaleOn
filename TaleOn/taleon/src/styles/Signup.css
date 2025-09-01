@@ -1,0 +1,9 @@
+/* Eye icon glow states */
+.eye-blue {
+  color: #00c3ff;
+  text-shadow: 0 0 8px #00c3ff, 0 0 15px #00c3ff;
+}
+.eye-pink {
+  color: #ff006f;
+  text-shadow: 0 0 8px #ff006f, 0 0 15px #ff006f;
+}

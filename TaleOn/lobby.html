@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lobby - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center min-h-screen flex items-center justify-center">
+
+  <div class="max-w-[600px] w-full p-10 bg-white/5 rounded-md border border-[#00c3ff] shadow-[0_0_15px_#00c3ff]">
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-[2.8rem] tracking-[2px] text-[#00c3ff]" 
+        style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+      Game <span class="text-[#ff006f]" style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;">Lobby</span>
+    </h1>
+
+    <!-- Room Code -->
+    <p class="text-lg mt-2 mb-8 text-[#ccc]">
+      Room Code: <span id="roomCode" class="text-[#ff006f]" style="text-shadow: 0 0 8px #ff006f;">----</span>
+    </p>
+
+    <!-- Section Title -->
+    <h2 class="font-[Orbitron] text-[1.5rem] mb-4 text-[#00c3ff]" style="text-shadow: 0 0 5px #00c3ff;">
+      Players
+    </h2>
+
+    <!-- Player List -->
+    <ul id="playerList" class="list-none p-0 m-0 mx-auto mb-8 max-w-[300px]"></ul>
+
+    <!-- Buttons -->
+    <div class="flex flex-wrap justify-center gap-3">
+      <button id="startGameBtn" onclick="startGame()" 
+              class="font-[Orbitron] text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+        Start Game
+      </button>
+      <button onclick="leaveLobby()" 
+              class="font-[Orbitron] text-base px-5 py-2 rounded-md bg-[#ff006f] text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]">
+        Leave Lobby
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Display Room Code
+    document.getElementById("roomCode").textContent = sessionStorage.getItem("roomCode") || "ABCD12";
+
+    // Example player list
+    let players = [
+      { name: sessionStorage.getItem("playerName") || "Host (You)" },
+      { name: "AI_Buddy" }
+    ];
+
+    // Render players
+    function renderPlayers() {
+      const list = document.getElementById("playerList");
+      list.innerHTML = "";
+      players.forEach(player => {
+        const li = document.createElement("li");
+        li.textContent = player.name;
+        li.className = "bg-white/5 p-2 my-2 rounded-md border border-[#00c3ff] shadow-[0_0_5px_#00c3ff]";
+        list.appendChild(li);
+      });
+    }
+    renderPlayers();
+
+    function startGame() {
+      window.location.href = "toss.html";
+    }
+
+    function leaveLobby() {
+      window.location.href = "landing.html";
+    }
+  </script>
+</body>
+</html>

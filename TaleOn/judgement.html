@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Judgement - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center min-h-screen flex items-center justify-center">
+
+  <div class="max-w-[800px] w-full mx-auto p-5">
+    
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-[2.5rem] tracking-[2px] text-[#00c3ff]" 
+        style="text-shadow:0 0 10px #00c3ff,0 0 20px #00c3ff;">
+      AI <span class="text-[#ff006f]" style="text-shadow:0 0 10px #ff006f,0 0 20px #ff006f;">Judgement</span>
+    </h1>
+
+    <!-- Verdict Box -->
+    <div id="verdictBox" 
+         class="mt-6 mx-auto px-6 py-4 rounded-lg border-2 border-[#00c3ff] shadow-[0_0_20px_#00c3ff] w-fit transition-all duration-500">
+      <h2 id="verdictText" class="text-xl font-bold">Analysing...</h2>
+    </div>
+
+    <!-- Criteria Scores -->
+    <div class="text-left max-w-[400px] mx-auto my-6 space-y-2">
+      <p><strong>Flow:</strong> <span id="flowScore">--</span></p>
+      <p><strong>Creativity:</strong> <span id="creativityScore">--</span></p>
+      <p><strong>Vibe:</strong> <span id="vibeScore">--</span></p>
+      <p><strong>Immersion:</strong> <span id="immersionScore">--</span></p>
+    </div>
+
+    <!-- Story Review -->
+    <div class="mt-8 text-left border-t border-[#333] pt-4">
+      <h3 class="font-[Orbitron] text-[#00c3ff] mb-2">Final Story</h3>
+      <div id="storyContent" class="bg-white/5 p-3 rounded-md max-h-[250px] overflow-y-auto"></div>
+    </div>
+
+    <!-- Continue Button -->
+    <button onclick="goToRoast()" 
+            class="mt-6 font-[Orbitron] text-base px-6 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+      Continue to Roast
+    </button>
+  </div>
+
+  <script>
+    // Load story from sessionStorage
+    let story = JSON.parse(sessionStorage.getItem("story")) || [
+      { player: "Player_1", text: "Once upon a time..." },
+      { player: "AI_Buddy", text: "Suddenly, a ghost appeared..." }
+    ];
+
+    // Render Story
+    const storyDiv = document.getElementById("storyContent");
+    story.forEach(entry => {
+      let p = document.createElement("p");
+      p.innerHTML = `<strong>${entry.player}:</strong> ${entry.text}`;
+      storyDiv.appendChild(p);
+    });
+
+    // Simulate AI Analysis
+    setTimeout(() => {
+      const verdict = Math.random() > 0.5 ? "WIN" : "LOSE";
+      const verdictBox = document.getElementById("verdictBox");
+      const verdictText = document.getElementById("verdictText");
+
+      verdictText.textContent = verdict === "WIN" ? "You All Win!" : "You All Lose!";
+
+      // Verdict styling
+      if (verdict === "WIN") {
+        verdictBox.classList.remove("border-[#00c3ff]", "shadow-[0_0_20px_#00c3ff]");
+        verdictBox.classList.add("border-[#00ff9f]", "shadow-[0_0_20px_#00ff9f]", "text-[#00ff9f]");
+      } else {
+        verdictBox.classList.remove("border-[#00c3ff]", "shadow-[0_0_20px_#00c3ff]");
+        verdictBox.classList.add("border-[#ff003c]", "shadow-[0_0_20px_#ff003c]", "text-[#ff003c]");
+      }
+
+      // Random Scores
+      document.getElementById("flowScore").textContent = `${Math.floor(Math.random() * 5) + 1}/5`;
+      document.getElementById("creativityScore").textContent = `${Math.floor(Math.random() * 5) + 1}/5`;
+      document.getElementById("vibeScore").textContent = `${Math.floor(Math.random() * 5) + 1}/5`;
+      document.getElementById("immersionScore").textContent = `${Math.floor(Math.random() * 5) + 1}/5`;
+
+      // Save result for roast page
+      sessionStorage.setItem("gameResult", verdict);
+    }, 1500);
+
+    function goToRoast() {
+      window.location.href = "roast.html";
+    }
+  </script>
+</body>
+</html>

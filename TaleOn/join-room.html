@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Join Room - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          },
+          colors: {
+            neonBlue: '#00c3ff',
+            neonPink: '#ff006f'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Autofill fix for dark mode inputs */
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+      -webkit-text-fill-color: #fff !important;
+      border: 2px solid #00c3ff !important;
+      caret-color: #fff !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    input:-webkit-autofill:focus {
+      border: 2px solid #ff006f !important;
+      -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset, 0 0 10px #ff006f !important;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center">
+
+  <div class="max-w-[500px] mx-auto p-8">
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-[2.8rem] tracking-[2px] text-neonBlue"
+        style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+      Join <span class="text-neonPink" style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;">Room</span>
+    </h1>
+
+    <!-- Player Name -->
+    <div class="my-5 text-left">
+      <label for="playerName" class="block font-bold mb-1 text-[#ccc]">Your Name</label>
+      <input type="text" id="playerName" placeholder="Enter your name"
+             class="w-full p-2 border-2 border-neonBlue bg-transparent text-white text-base rounded-md outline-none font-[Inter] focus:border-neonPink focus:shadow-[0_0_10px_#ff006f]">
+    </div>
+
+    <!-- Room Code -->
+    <div class="my-5 text-left">
+      <label for="roomCode" class="block font-bold mb-1 text-[#ccc]">Room Code</label>
+      <input type="text" id="roomCode" placeholder="Enter room code (6 chars)" maxlength="6"
+             class="w-full p-2 border-2 border-neonBlue bg-transparent text-white text-base rounded-md outline-none font-[Inter] uppercase focus:border-neonPink focus:shadow-[0_0_10px_#ff006f]">
+    </div>
+
+    <!-- Inline error message -->
+    <p id="formError" class="hidden text-sm text-red-400 text-left mt-1"></p>
+
+    <!-- Buttons -->
+    <div class="flex flex-wrap justify-center gap-3 mt-8">
+      <button id="joinBtn" onclick="joinRoom()"
+              class="font-[Orbitron] text-base px-5 py-2 rounded-md bg-neonBlue text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+        Join Room
+      </button>
+      <button onclick="goBack()"
+              class="font-[Orbitron] text-base px-5 py-2 rounded-md bg-neonPink text-white cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#ff006f,0_0_25px_#ff006f]">
+        Back
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function showFormError(msg) {
+      const el = document.getElementById('formError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      // small auto-hide after few seconds
+      setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+
+    function joinRoom() {
+      const nameEl = document.getElementById("playerName");
+      const codeEl = document.getElementById("roomCode");
+
+      const name = nameEl.value.trim();
+      const code = codeEl.value.trim().toUpperCase();
+
+      // basic required validation (inline message)
+      if (!name || !code) {
+        showFormError("Please enter both name and room code!");
+        return;
+      }
+
+      // basic format validation for room code (6 alphanumeric chars)
+      const codeOk = /^[A-Z0-9]{6}$/.test(code);
+      if (!codeOk) {
+        // embed the error page as you had originally
+        sessionStorage.setItem("errorMessage", "Invalid room code format. Room codes must be 6 letters/numbers.");
+        window.location.href = "error.html";
+        return;
+      }
+
+      // Save details locally (mock)
+      sessionStorage.setItem("playerName", name);
+      sessionStorage.setItem("roomCode", code);
+
+      // Simulate server-side validation placeholder
+      // Replace this block with an actual fetch() call to your backend later.
+      const validRoom = true; // <-- set to false to test error flow
+      if (!validRoom) {
+        sessionStorage.setItem("errorMessage", "Invalid room code or room no longer exists.");
+        window.location.href = "error.html";
+        return;
+      }
+
+      // all good, go to lobby
+      window.location.href = "lobby.html";
+    }
+
+    function goBack() {
+      window.location.href = "landing.html";
+    }
+  </script>
+</body>
+</html>

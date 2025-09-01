@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Room - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] min-h-screen flex items-center justify-center">
+
+  <div class="max-w-[800px] w-full p-6 text-center">
+    
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-[2.5rem] tracking-[2px] text-[#00c3ff]"
+        style="text-shadow:0 0 10px #00c3ff,0 0 20px #00c3ff;">
+      Tale<span class="text-[#ff006f]" style="text-shadow:0 0 10px #ff006f,0 0 20px #ff006f;">On</span> Game
+    </h1>
+
+    <!-- Room Code -->
+    <p class="text-sm mt-1 mb-5 text-[#ccc]">
+      Room Code:
+      <span id="roomCode" class="text-[#ff006f]" style="text-shadow:0 0 8px #ff006f;">----</span>
+    </p>
+
+    <!-- Story Feed -->
+    <div id="storyFeed" 
+         class="bg-white/5 p-4 rounded-md border border-[#00c3ff] shadow-[0_0_10px_#00c3ff] h-[300px] overflow-y-auto text-left mb-6">
+      <!-- Story will populate here -->
+    </div>
+
+    <!-- Turn Info -->
+    <div class="mb-4">
+      <p>Current Turn: <span id="currentPlayer">----</span></p>
+      <p>Time Left: <span id="timer">--</span> min</p>
+    </div>
+
+    <!-- Turn Input -->
+    <div id="turnInputArea" class="mt-4">
+      <textarea id="storyInput" placeholder="Write your part of the story..."
+        class="w-full h-[100px] bg-transparent text-white border-2 border-[#00c3ff] rounded-md p-2 text-base font-[Inter] resize-none outline-none focus:border-[#ff006f] focus:shadow-[0_0_10px_#ff006f]"></textarea>
+      <button onclick="submitTurn()"
+        class="mt-3 font-[Orbitron] text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+        Submit
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let players = JSON.parse(sessionStorage.getItem("players")) || [
+      sessionStorage.getItem("playerName") || "Player",
+      "AI_Buddy"
+    ];
+
+    let currentTurnIndex = 0;
+    let turnTime = parseInt(sessionStorage.getItem("turnTime")) || 10; // minutes
+    let maxRounds = parseInt(sessionStorage.getItem("maxRounds")) || 5;
+    let currentRound = 1;
+    let timer;
+    let story = [];
+
+    // Show room code
+    document.getElementById("roomCode").textContent = sessionStorage.getItem("roomCode") || "ABCD12";
+
+    // Set starting player from toss winner
+    let tossWinner = sessionStorage.getItem("tossWinner");
+    if (tossWinner) {
+      currentTurnIndex = players.indexOf(tossWinner);
+    }
+
+    updateTurnDisplay();
+    startTimer();
+
+    function updateTurnDisplay() {
+      document.getElementById("currentPlayer").textContent = players[currentTurnIndex];
+      document.getElementById("storyInput").value = "";
+
+      if (players[currentTurnIndex] === "AI_Buddy") {
+        document.getElementById("turnInputArea").style.display = "none";
+        setTimeout(() => {
+          let aiText = "AI_Buddy continues the story with a twist...";
+          story.push({ player: "AI_Buddy", text: aiText });
+          renderStory();
+          nextTurn();
+        }, 1500);
+      } else {
+        document.getElementById("turnInputArea").style.display = "block";
+      }
+    }
+
+    function startTimer() {
+    let timeLeft = turnTime * 60; // convert minutes to seconds
+    updateTimerDisplay(timeLeft);
+
+    timer = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay(timeLeft);
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            if (players[currentTurnIndex] !== "AI_Buddy") {
+                // Auto-skip if player doesn't submit
+                nextTurn();
+            }
+        }
+    }, 1000); // update every second
+}
+
+function updateTimerDisplay(seconds) {
+    let mins = Math.floor(seconds / 60);
+    let secs = seconds % 60;
+    document.getElementById("timer").textContent =
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+
+    function submitTurn() {
+      const text = document.getElementById("storyInput").value.trim();
+      if (!text) {
+        alert("Please write something before submitting!");
+        return;
+      }
+      story.push({ player: players[currentTurnIndex], text });
+      renderStory();
+      nextTurn();
+    }
+
+    function renderStory() {
+      const feed = document.getElementById("storyFeed");
+      feed.innerHTML = "";
+      story.forEach(entry => {
+        let p = document.createElement("p");
+        p.innerHTML = `<strong>${entry.player}:</strong> ${entry.text}`;
+        feed.appendChild(p);
+      });
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function nextTurn() {
+      clearInterval(timer);
+
+      if (currentTurnIndex === players.length - 1) {
+        currentRound++;
+      }
+
+      if (currentRound > maxRounds) {
+        sessionStorage.setItem("story", JSON.stringify(story));
+        window.location.href = "judgement.html";
+        return;
+      }
+
+      currentTurnIndex = (currentTurnIndex + 1) % players.length;
+      updateTurnDisplay();
+      startTimer();
+    }
+  </script>
+</body>
+</html>

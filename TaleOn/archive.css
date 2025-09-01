@@ -1,0 +1,106 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #0a0a0a;
+    color: #fff;
+    text-align: center;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    color: #00c3ff;
+    text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;
+}
+
+.title span {
+    color: #ff006f;
+    text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;
+}
+
+.subtitle {
+    color: #ccc;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+.filters button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    padding: 8px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #00c3ff;
+    color: #000;
+    transition: all 0.3s ease;
+}
+
+.filters button:hover {
+    box-shadow: 0 0 15px #00c3ff, 0 0 25px #00c3ff;
+}
+
+.story-list {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.story-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #00c3ff;
+    box-shadow: 0 0 8px #00c3ff;
+}
+
+.story-card.win {
+    border-color: #00ff9f;
+    box-shadow: 0 0 8px #00ff9f;
+}
+
+.story-card.lose {
+    border-color: #ff003c;
+    box-shadow: 0 0 8px #ff003c;
+}
+
+.story-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.story-body {
+    font-size: 0.95rem;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.buttons {
+    margin-top: 30px;
+}
+
+.buttons button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #ff006f;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.buttons button:hover {
+    box-shadow: 0 0 15px #ff006f, 0 0 25px #ff006f;
+}

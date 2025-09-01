@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Toss - TaleOn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          },
+          keyframes: {
+            flip: { 
+              '0%': { transform: 'rotateY(0deg)' },
+              '100%': { transform: 'rotateY(720deg)' }
+            }
+          },
+          animation: {
+            flip: 'flip 1s ease-in-out'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] text-center min-h-screen flex items-center justify-center">
+
+  <div class="max-w-[500px] w-full p-10 bg-white/5 rounded-md border border-[#00c3ff] shadow-[0_0_15px_#00c3ff]">
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-[2.5rem] mb-6 text-[#00c3ff]"
+        style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+      Who <span class="text-[#ff006f]" style="text-shadow: 0 0 10px #ff006f;">Starts?</span>
+    </h1>
+
+    <!-- Coin -->
+    <div id="coin" class="w-[120px] h-[120px] mx-auto mb-5 rounded-full bg-gradient-to-br from-[#00c3ff] to-[#0077ff] shadow-[0_0_20px_#00c3ff,0_0_40px_#00c3ff]"></div>
+
+    <!-- Toss Button -->
+    <button onclick="startToss()" id="tossBtn"
+      class="font-[Orbitron] text-lg px-6 py-2 mt-3 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+      Flip Coin
+    </button>
+
+    <!-- Result -->
+    <div id="resultBox" class="hidden mt-6">
+      <p id="resultText" class="text-[#ff006f] text-lg" style="text-shadow: 0 0 10px #ff006f;"></p>
+      <button onclick="goToGame()" 
+        class="font-[Orbitron] text-lg px-5 py-2 mt-4 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]">
+        Go to Game
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function startToss() {
+      const coin = document.getElementById("coin");
+      const resultBox = document.getElementById("resultBox");
+      const resultText = document.getElementById("resultText");
+
+      let players = JSON.parse(sessionStorage.getItem("players")) || [
+        sessionStorage.getItem("playerName") || "Player",
+        "AI_Buddy"
+      ];
+
+      // Flip animation
+      coin.classList.add("animate-flip");
+      document.getElementById("tossBtn").disabled = true;
+
+      setTimeout(() => {
+        coin.classList.remove("animate-flip");
+        const winner = players[Math.floor(Math.random() * players.length)];
+        sessionStorage.setItem("tossWinner", winner);
+        resultText.textContent = `${winner} starts the story!`;
+        resultBox.classList.remove("hidden");
+      }, 1000);
+    }
+
+    function goToGame() {
+      window.location.href = "game-room.html";
+    }
+  </script>
+</body>
+</html>

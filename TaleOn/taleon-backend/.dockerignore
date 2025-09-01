@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.production
+.env.development
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+testGroq.js
+*.log
+.DS_Store
+Thumbs.db
+
+

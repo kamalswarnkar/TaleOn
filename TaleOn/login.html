@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+      <title>TaleOn - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Autofill dark mode fix */
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+      -webkit-text-fill-color: #fff !important;
+      border: 2px solid #00c3ff !important;
+      caret-color: #fff !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    input:-webkit-autofill:focus {
+      border: 2px solid #ff006f !important;
+      -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset, 0 0 10px #ff006f !important;
+    }
+    /* Eye icon glow states */
+    .eye-blue {
+      color: #00c3ff;
+      text-shadow: 0 0 8px #00c3ff, 0 0 15px #00c3ff;
+    }
+    .eye-pink {
+      color: #ff006f;
+      text-shadow: 0 0 8px #ff006f, 0 0 15px #ff006f;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            orbitron: ['Orbitron', 'sans-serif'],
+            inter: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0a0a0a] text-white font-[Inter] flex justify-center items-center min-h-screen px-4">
+
+  <div class="w-full max-w-md bg-[#111] p-8 rounded-lg border border-[#00c3ff] shadow-[0_0_20px_#00c3ff] hover:shadow-[0_0_25px_#00c3ff,0_0_40px_#00c3ff] transition-all duration-300">
+
+    <!-- Title -->
+    <h1 class="font-[Orbitron] text-3xl text-center text-[#00c3ff]"
+        style="text-shadow: 0 0 10px #00c3ff, 0 0 20px #00c3ff;">
+      Log <span class="text-[#ff006f]"
+      style="text-shadow: 0 0 10px #ff006f, 0 0 20px #ff006f;">In</span>
+    </h1>
+
+    <!-- Form -->
+    <div class="mt-6 space-y-5">
+
+      <!-- Email -->
+      <div>
+        <label for="email" class="block text-sm font-bold text-[#ccc] mb-1">Email</label>
+        <input type="email" id="email" placeholder="Enter your email"
+               class="w-full p-3 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_12px_#ff006f] transition duration-300">
+      </div>
+
+      <!-- Password with Eye Icon -->
+      <div>
+        <label for="password" class="block text-sm font-bold text-[#ccc] mb-1">Password</label>
+        <div class="relative">
+          <input type="password" id="password" placeholder="Enter your password"
+                 class="w-full p-3 border-2 border-[#00c3ff] bg-transparent text-white rounded-md outline-none focus:border-[#ff006f] focus:shadow-[0_0_12px_#ff006f] pr-12 transition duration-300">
+          <span onclick="togglePassword()" id="toggleEye"
+                class="absolute inset-y-0 right-3 flex items-center cursor-pointer eye-blue transition duration-300">
+            👁
+          </span>
+        </div>
+        <a href="forgot-password.html" class="block text-sm text-[#00c3ff] mt-1 hover:underline text-right">Forgot Password?</a>
+      </div>
+
+      <!-- Login Button -->
+      <button onclick="login()" class="w-full font-[Orbitron] px-5 py-2 mt-4 rounded-md bg-[#00c3ff] text-black font-bold hover:shadow-[0_0_18px_#00c3ff,0_0_30px_#00c3ff] transition duration-300">
+        Log In
+      </button>
+
+      <!-- OR -->
+      <div class="flex items-center my-4">
+        <hr class="flex-grow border-[#333]">
+        <span class="mx-3 text-[#777]">OR</span>
+        <hr class="flex-grow border-[#333]">
+      </div>
+
+      <!-- Google Sign In -->
+      <button onclick="googleSignIn()" class="w-full flex items-center justify-center gap-3 font-[Orbitron] px-5 py-2 rounded-md bg-white text-black hover:shadow-[0_0_18px_#fff,0_0_30px_#fff] transition duration-300">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google" class="w-5 h-5">
+        Sign in with Google
+      </button>
+
+      <!-- Sign Up Link -->
+      <p class="mt-4 text-sm text-[#aaa] text-center">
+        Don't have an account?
+        <a href="signup.html" class="text-[#00c3ff] hover:underline">Sign Up</a>
+      </p>
+
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const passField = document.getElementById("password");
+      const toggleEye = document.getElementById("toggleEye");
+      if (passField.type === "password") {
+        passField.type = "text";
+        toggleEye.textContent = "👁";
+        toggleEye.classList.remove("eye-blue");
+        toggleEye.classList.add("eye-pink");
+      } else {
+        passField.type = "password";
+        toggleEye.textContent = "👁";
+        toggleEye.classList.remove("eye-pink");
+        toggleEye.classList.add("eye-blue");
+      }
+    }
+
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        alert("Please fill all fields!");
+        return;
+      }
+
+      alert("Login successful! (Backend integration pending)");
+      window.location.href = "landing.html";
+    }
+
+    function googleSignIn() {
+      alert("Google Sign-In (Backend integration pending)");
+    }
+  </script>
+</body>
+</html>
