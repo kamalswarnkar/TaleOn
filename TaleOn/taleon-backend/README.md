@@ -83,7 +83,7 @@ FROM_EMAIL=noreply@yourdomain.com
 ### **Your Current Email Config Issues**
 ```env
 # ❌ This won't work:
-EMAIL_PASS=kamal@284
+EMAIL_PASS=google_account_password
 
 # ✅ Use App Password instead:
 EMAIL_PASS=abcd efgh ijkl mnop
