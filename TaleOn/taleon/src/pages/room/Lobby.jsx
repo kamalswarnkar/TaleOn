@@ -124,6 +124,13 @@ const Lobby = () => {
         if (data.gameId) sessionStorage.setItem("gameId", data.gameId);
         if (data.title) sessionStorage.setItem("gameTitle", data.title);
         if (data.genre) sessionStorage.setItem("gameGenre", data.genre);
+        if (typeof data.turnTimeLimit === "number") {
+          const minutes = Math.max(1, Math.ceil(data.turnTimeLimit / 60));
+          sessionStorage.setItem("turnTime", String(minutes));
+        }
+        if (Array.isArray(data.players) && data.players.length) {
+          sessionStorage.setItem("players", JSON.stringify(data.players));
+        }
         // Ensure AI player exists locally for clients who didn't initiate start
         const existing = JSON.parse(sessionStorage.getItem("players") || "[]");
         const hasAI = existing.some((p) => p.username === "AI_Buddy");
