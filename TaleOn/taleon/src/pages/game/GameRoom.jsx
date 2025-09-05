@@ -163,13 +163,33 @@ const GameRoom = () => {
       return;
     }
     try {
-      const socket = getSocket();
-      if (!socket) {
-        error("Connection lost. Please refresh.");
-        return;
-      }
-      socket.emit("submitTurn", { gameId, userId: user._id, content: storyInput.trim() });
+      // Optimistic update: show locally immediately
+      const optimisticEntry = { player: players[currentTurnIndex]?.username || "Player", text: storyInput.trim() };
+      setStory((prev) => [...prev, optimisticEntry]);
+      const previousInput = storyInput;
+      // Submit via HTTP to ensure server updates and we can fetch authoritative state
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/game/turn`,
+        { roomCode, gameId, text: previousInput.trim() },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
       setStoryInput("");
+
+      // Fetch latest game to sync story and turn for all clients regardless of socket broadcast
+      const sync = await axios.get(
+        `${import.meta.env.VITE_API_URL}/game/by-room/${roomCode}`,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      const g = sync.data || {};
+      if (Array.isArray(g.story)) {
+        setStory(g.story.map((s) => ({ player: s.player, text: s.text })));
+      }
+      if (typeof g.currentTurnIndex === "number") {
+        const wrapped = g.currentTurnIndex === 0 && story.length > 0;
+        setCurrentTurnIndex(g.currentTurnIndex);
+        if (wrapped) setCurrentRound((r) => r + 1);
+      }
     } catch (err) {
       console.error(err);
       error("Failed to submit turn");
