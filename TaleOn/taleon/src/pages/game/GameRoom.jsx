@@ -64,6 +64,16 @@ const GameRoom = () => {
         if (typeof g?.currentTurnIndex === "number") {
           setCurrentTurnIndex(g.currentTurnIndex);
         }
+        // Sync timer from server config if available
+        if (typeof g?.turnTimeLimit === "number" && g.turnTimeLimit > 0) {
+          const seconds = Math.max(1, Math.floor(g.turnTimeLimit));
+          setTimeLeft(seconds);
+          startTimer(seconds);
+          sessionStorage.setItem("turnTime", String(Math.ceil(seconds / 60)));
+        } else {
+          startTimer();
+        }
+
         // Derive round from story length
         const roundsSoFar = Math.max(1, Math.floor((g?.story?.length || 0) / Math.max(1, (g?.players?.length || players.length || 1))) + 1);
         setCurrentRound(roundsSoFar);
