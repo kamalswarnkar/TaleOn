@@ -9,6 +9,7 @@ const Lobby = () => {
   const { error } = useToast();
   const [roomCode, setRoomCode] = useState("----");
   const [players, setPlayers] = useState([]);
+  const [isHost, setIsHost] = useState(false);
 
   useEffect(() => {
     const code = sessionStorage.getItem("roomCode");
@@ -36,10 +37,27 @@ const Lobby = () => {
       )
       .then((res) => {
         console.log("Room data received:", res.data);
-        setPlayers(res.data.players.map((p) => ({
-          name: p.playerName || p.username || "Player",
-          isHost: p._id === res.data.host._id
-        })));
+        // Persist full players for game session usage
+        const fullPlayers = [
+          ...res.data.players.map((p) => ({
+            _id: p._id,
+            username: p.playerName || p.username || "Player",
+          })),
+        ];
+        sessionStorage.setItem("players", JSON.stringify(fullPlayers));
+
+        // Determine host
+        const currentUserId = user._id;
+        const currentIsHost = res.data.host && res.data.host._id === currentUserId;
+        setIsHost(!!currentIsHost);
+        sessionStorage.setItem("isHost", currentIsHost ? "1" : "0");
+
+        setPlayers(
+          res.data.players.map((p) => ({
+            name: p.playerName || p.username || "Player",
+            isHost: p._id === res.data.host._id,
+          }))
+        );
       })
       .catch((err) => {
         console.error(err);
@@ -71,6 +89,27 @@ const Lobby = () => {
         name: p.playerName || p.username || "Player",
         isHost: p._id === data.host?._id
       })));
+    });
+
+    // When backend starts the game, everyone in room should proceed
+    socket.on("gameStarted", (data) => {
+      try {
+        if (!data) return;
+        if (data.gameId) sessionStorage.setItem("gameId", data.gameId);
+        if (data.title) sessionStorage.setItem("gameTitle", data.title);
+        if (data.genre) sessionStorage.setItem("gameGenre", data.genre);
+        // Ensure AI player exists locally for clients who didn't initiate start
+        const existing = JSON.parse(sessionStorage.getItem("players") || "[]");
+        const hasAI = existing.some((p) => p.username === "AI_Buddy");
+        if (!hasAI) {
+          const withAI = [...existing, { _id: "AI", username: "AI_Buddy" }];
+          sessionStorage.setItem("players", JSON.stringify(withAI));
+        }
+        // Proceed to game room
+        navigate("/game-room");
+      } catch (e) {
+        console.error("Failed handling gameStarted:", e);
+      }
     });
 
     return () => {
@@ -161,12 +200,14 @@ const Lobby = () => {
 
         {/* Buttons */}
         <div className="flex flex-wrap justify-center gap-3">
-          <button
-            onClick={startGame}
-            className="font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
-          >
-            Start Game
-          </button>
+          {isHost && (
+            <button
+              onClick={startGame}
+              className="font-orbitron text-base px-5 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
+            >
+              Start Game
+            </button>
+          )}
           <button
             onClick={refreshRoom}
             className="font-orbitron text-base px-4 py-2 rounded-md bg-[#00c3ff] text-black cursor-pointer transition duration-300 hover:shadow-[0_0_15px_#00c3ff,0_0_25px_#00c3ff]"
