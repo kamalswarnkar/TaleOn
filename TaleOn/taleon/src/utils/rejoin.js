@@ -15,7 +15,7 @@ export const checkAndRejoinSession = async () => {
     // Check if user has an active game first (higher priority)
     if (gameId) {
       const gameResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/${gameId}`,
+        `${import.meta.env.VITE_API_URL}/game/${gameId}`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
@@ -54,7 +54,7 @@ export const checkAndRejoinSession = async () => {
     // Check if user has an active room (fallback)
     if (roomCode) {
       const roomResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/${roomCode}`,
+        `${import.meta.env.VITE_API_URL}/room/${roomCode}`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
@@ -92,7 +92,7 @@ export const restoreGameState = async (gameId) => {
   
   try {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/${gameId}`,
+      `${import.meta.env.VITE_API_URL}/game/${gameId}`,
       { headers: { Authorization: `Bearer ${user.token}` } }
     );
     
@@ -127,7 +127,7 @@ export const restoreRoomState = async (roomCode) => {
   
   try {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/${roomCode}`,
+      `${import.meta.env.VITE_API_URL}/room/${roomCode}`,
       { headers: { Authorization: `Bearer ${user.token}` } }
     );
     

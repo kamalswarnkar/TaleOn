@@ -108,7 +108,7 @@ const Judgement = () => {
         console.log("[JUDGEMENT] Sending story to backend:", normalizedStory);
         
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/judgement`,
+          `${import.meta.env.VITE_API_URL}/game/judgement`,
           { roomCode, story: normalizedStory },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );

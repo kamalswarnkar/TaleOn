@@ -34,7 +34,7 @@ const Signup = () => {
     try {
       // call backend signup API
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/auth/signup`,
+        `${import.meta.env.VITE_API_URL}/auth/signup`,
         {
           username: name,
           email,
@@ -158,7 +158,7 @@ const Signup = () => {
           </div>
 
           <a
-            href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/auth/google`}
+            href={`${import.meta.env.VITE_API_URL}/auth/google`}
             className="w-full flex items-center justify-center gap-3 font-orbitron px-5 py-2 rounded-md bg-white text-black transition duration-300 hover:shadow-[0_0_18px_#fff,0_0_30px_#fff]"
           >
             <img

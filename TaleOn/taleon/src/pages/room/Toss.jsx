@@ -24,7 +24,7 @@ const Toss = () => {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/start`,
+        `${import.meta.env.VITE_API_URL}/game/start`,
         { roomCode },
         {
           headers: { Authorization: `Bearer ${user.token}` },

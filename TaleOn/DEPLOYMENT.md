@@ -103,10 +103,10 @@ docker-compose up -d --build
 
 ```bash
 # Backend health
-curl http://localhost:5000/health
+curl http://127.0.0.1:5000/health
 
 # Frontend health
-curl http://localhost:3000/health
+curl http://127.0.0.1:3000/health
 
 # MongoDB connection
 docker-compose exec backend node -e "
@@ -169,8 +169,8 @@ docker-compose down
 docker-compose up -d --build
 
 # Verify health
-curl http://localhost:5000/health
-curl http://localhost:3000/health
+curl http://127.0.0.1:5000/health
+curl http://127.0.0.1:3000/health
 ```
 
 ## 🔒 Security Considerations

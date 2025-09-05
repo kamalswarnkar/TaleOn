@@ -24,7 +24,7 @@ const CreateRoom = () => {
     try {
       // ✅ send playerName, turnTime, maxRounds
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/create`,
+        `${import.meta.env.VITE_API_URL}/room/create`,
         {
           playerName: playerName.trim(),
           maxRounds: Number(maxRounds),

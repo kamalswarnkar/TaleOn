@@ -63,7 +63,7 @@ REM Check service health
 echo 🏥 Checking service health...
 
 REM Check backend health
-curl -f http://localhost:5000/health >nul 2>&1
+curl -f http://127.0.0.1:5000/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Backend is healthy
 ) else (
@@ -74,7 +74,7 @@ if %errorlevel% equ 0 (
 )
 
 REM Check frontend health
-curl -f http://localhost:3000/health >nul 2>&1
+curl -f http://127.0.0.1:3000/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Frontend is healthy
 ) else (
@@ -87,9 +87,9 @@ if %errorlevel% equ 0 (
 echo 🎉 Deployment completed successfully!
 echo.
 echo 📱 Application URLs:
-echo    Frontend: http://localhost:3000
-echo    Backend API: http://localhost:5000
-echo    MongoDB: localhost:27017
+echo    Frontend: http://127.0.0.1:3000
+echo    Backend API: http://127.0.0.1:5000
+echo    MongoDB: 127.0.0.1:27017
 echo.
 echo 🔧 Useful commands:
 echo    View logs: docker-compose logs -f
@@ -98,8 +98,8 @@ echo    Restart services: docker-compose restart
 echo    Update services: docker-compose up -d --build
 echo.
 echo 📊 Monitor health:
-echo    Backend: curl http://localhost:5000/health
-echo    Frontend: curl http://localhost:3000/health
+echo    Backend: curl http://127.0.0.1:5000/health
+echo    Frontend: curl http://127.0.0.1:3000/health
 echo.
 pause
 

@@ -19,7 +19,7 @@ const Archive = () => {
     const fetchArchives = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/archive`,
+          `${import.meta.env.VITE_API_URL}/game/archive`,
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
 

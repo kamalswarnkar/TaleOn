@@ -31,7 +31,7 @@ const Lobby = () => {
     // fetch latest room info from backend
     axios
       .get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/${code}`,
+        `${import.meta.env.VITE_API_URL}/room/${code}`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       )
       .then((res) => {
@@ -90,7 +90,7 @@ const Lobby = () => {
     try {
       const user = JSON.parse(sessionStorage.getItem("user") || "{}");
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/room/${roomCode}`,
+        `${import.meta.env.VITE_API_URL}/room/${roomCode}`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setPlayers(res.data.players.map((p) => ({

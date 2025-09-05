@@ -149,7 +149,7 @@ BACKEND_PID=$!
 sleep 10
 
 # Check if backend is running
-if ! curl -f http://localhost:5000/health > /dev/null 2>&1; then
+if ! curl -f http://127.0.0.1:5000/health > /dev/null 2>&1; then
     echo "❌ Backend failed to start"
     kill $BACKEND_PID 2>/dev/null
     exit 1
@@ -177,8 +177,8 @@ fi
 echo "🎉 TaleOn Production Started!"
 echo ""
 echo "📱 Application URLs:"
-echo "   Frontend: http://localhost:3000"
-echo "   Backend API: http://localhost:5000"
+echo "   Frontend: http://127.0.0.1:3000"
+echo "   Backend API: http://127.0.0.1:5000"
 echo ""
 echo "🛑 To stop: kill $BACKEND_PID $FRONTEND_PID"
 
@@ -212,7 +212,7 @@ REM Wait for backend to start
 timeout /t 10 /nobreak >nul
 
 REM Check if backend is running
-curl -f http://localhost:5000/health >nul 2>&1
+curl -f http://127.0.0.1:5000/health >nul 2>&1
 if %errorlevel% neq 0 (
     echo ❌ Backend failed to start
     pause
@@ -237,8 +237,8 @@ if %errorlevel% equ 0 (
 echo 🎉 TaleOn Production Started!
 echo.
 echo 📱 Application URLs:
-echo    Frontend: http://localhost:3000
-echo    Backend API: http://localhost:5000
+echo    Frontend: http://127.0.0.1:3000
+echo    Backend API: http://127.0.0.1:5000
 echo.
 echo 🛑 To stop: Close the command windows
 pause

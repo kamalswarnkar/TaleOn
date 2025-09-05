@@ -61,7 +61,7 @@ const GameRoom = () => {
     if (currentPlayer === "AI_Buddy") {
       try {
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/turn`,
+          `${import.meta.env.VITE_API_URL}/game/turn`,
           { roomCode, gameId },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
@@ -119,7 +119,7 @@ const GameRoom = () => {
     }
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/turn`,
+        `${import.meta.env.VITE_API_URL}/game/turn`,
         { roomCode, gameId, text: storyInput.trim() },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );

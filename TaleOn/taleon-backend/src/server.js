@@ -17,7 +17,11 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: NODE_ENV === 'production' 
-      ? [process.env.FRONTEND_URL || 'https://yourdomain.com']
+      ? [
+          process.env.FRONTEND_URL,
+          process.env.FRONTEND_URL?.replace('https://', 'https://www.'),
+          process.env.FRONTEND_URL?.replace('http://', 'http://www.')
+        ].filter(Boolean)
       : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST']

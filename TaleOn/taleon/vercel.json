@@ -28,7 +28,7 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "@vite_api_url",
-    "VITE_SOCKET_URL": "@vite_socket_url"
+    "VITE_API_URL": "https://taleon.onrender.com",
+    "VITE_SOCKET_URL": "https://taleon.onrender.com"
   }
 }

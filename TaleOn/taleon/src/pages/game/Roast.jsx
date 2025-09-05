@@ -22,7 +22,7 @@ const Roast = () => {
     const fetchRoasts = async () => {
       try {
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/game/roast`,
+          `${import.meta.env.VITE_API_URL}/game/roast`,
           { roomCode, players, story, result },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );

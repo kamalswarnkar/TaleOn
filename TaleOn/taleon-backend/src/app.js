@@ -32,9 +32,10 @@ const app = express();
 // Secure CORS configuration
 const allowedOrigins = process.env.NODE_ENV === 'production' 
   ? [
-      process.env.FRONTEND_URL || 'https://yourdomain.com',
-      'https://www.yourdomain.com'
-    ]
+      process.env.FRONTEND_URL,
+      process.env.FRONTEND_URL?.replace('https://', 'https://www.'),
+      process.env.FRONTEND_URL?.replace('http://', 'http://www.')
+    ].filter(Boolean)
   : [
       'http://localhost:5173',
       'http://localhost:3000',
@@ -651,10 +652,10 @@ app.get('/help', (_req, res) => {
       }
     },
     commonCommands: [
-      'curl http://localhost:5000/ready',
-      'curl http://localhost:5000/config',
-      'curl http://localhost:5000/test-all',
-      'curl http://localhost:5000/health'
+      'curl http://127.0.0.1:5000/ready',
+      'curl http://127.0.0.1:5000/config',
+      'curl http://127.0.0.1:5000/test-all',
+      'curl http://127.0.0.1:5000/health'
     ],
     nextSteps: [
       'Start with /ready to check system readiness',
