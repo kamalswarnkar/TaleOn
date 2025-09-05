@@ -11,7 +11,7 @@ const router = express.Router();
  */
 router.post("/create", protect, async (req, res) => {
   try {
-    const { playerName } = req.body;
+    const { playerName, turnTime, maxRounds } = req.body;
     const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const room = new Room({
@@ -25,12 +25,20 @@ router.post("/create", protect, async (req, res) => {
       room.playerNames.set(req.user._id.toString(), playerName.trim());
     }
 
+    if (Number.isFinite(Number(turnTime))) {
+      room.turnTime = Math.max(1, Number(turnTime));
+    }
+    if (Number.isFinite(Number(maxRounds))) {
+      room.maxRounds = Math.max(1, Number(maxRounds));
+    }
+
     await room.save();
 
     res.status(201).json({
       message: "Room created successfully",
       roomCode: room.roomCode,
       host: req.user.username,
+      room
     });
   } catch (error) {
     res.status(500).json({ message: "Error creating room", error: error.message });

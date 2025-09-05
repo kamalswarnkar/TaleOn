@@ -32,6 +32,9 @@ const roomSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Game configuration
+    turnTime: { type: Number, default: 10 }, // minutes
+    maxRounds: { type: Number, default: 5 },
   },
   { timestamps: true }
 );

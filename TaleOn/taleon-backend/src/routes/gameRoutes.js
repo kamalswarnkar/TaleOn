@@ -402,6 +402,7 @@ router.post("/start", protect, async (req, res) => {
       room: room._id,
       roomCode: room.roomCode,
       currentTurnIndex: 0,
+      turnTimeLimit: Math.max(60, (Number(room.turnTime) || 10) * 60),
     });
 
     await game.save();
@@ -415,6 +416,8 @@ router.post("/start", protect, async (req, res) => {
       roomCode: room.roomCode,
       title: game.title,
       genre: game.genre,
+      turnTimeLimit: game.turnTimeLimit,
+      players: playersPayload,
     });
 
     res.status(201).json({
@@ -729,6 +732,11 @@ router.get("/by-room/:roomCode", protect, async (req, res) => {
     
     const gameData = game.toObject();
     gameData.story = normalizedStory;
+    // Provide players with chosen names for the frontend
+    gameData.players = (game.players || []).map(p => ({
+      _id: p._id,
+      username: room?.playerNames?.get(p._id.toString()) || p.username
+    }));
     
     res.json(gameData);
   } catch (error) {
