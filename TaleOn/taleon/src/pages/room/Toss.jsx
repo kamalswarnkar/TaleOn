@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../components/UI/Toast";
 import axios from "axios";
+import { connectSocket, joinRoom, getSocket } from "../../utils/socket";
 
 const Toss = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Toss = () => {
   const startToss = async () => {
     const roomCode = sessionStorage.getItem("roomCode");
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const turnTimeMinutes = parseInt(sessionStorage.getItem("turnTime")) || 10;
 
     if (!roomCode || !user?.token) {
       error("Missing room or login info.");
@@ -47,6 +49,17 @@ const Toss = () => {
       sessionStorage.setItem("gameId", gameId);
       sessionStorage.setItem("gameTitle", title);
       sessionStorage.setItem("gameGenre", genre);
+
+      // Notify room to start the game with synchronized timer
+      try {
+        const socket = connectSocket(() => {
+          joinRoom(roomCode, user.username);
+        });
+        const durationMs = turnTimeMinutes * 60 * 1000;
+        socket.emit("startGame", { roomCode, gameId, turnDuration: durationMs });
+      } catch (e) {
+        console.error("Failed to emit startGame:", e);
+      }
 
       setTimeout(() => {
         setFlipping(false);

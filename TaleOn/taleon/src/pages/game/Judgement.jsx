@@ -105,11 +105,20 @@ const Judgement = () => {
 
     const fetchJudgement = async () => {
       try {
-        console.log("[JUDGEMENT] Sending story to backend:", normalizedStory);
+        console.log("[JUDGEMENT] Fetching canonical story & sending to backend");
+        // Fetch canonical game state to ensure same story on all clients
+        const canonical = await axios.get(
+          `${import.meta.env.VITE_API_URL}/game/by-room/${roomCode}`,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+        const canonicalStory = Array.isArray(canonical.data?.story)
+          ? canonical.data.story.map(s => ({ player: s.player, text: s.text }))
+          : normalizedStory;
+        setStory(canonicalStory);
         
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/game/judgement`,
-          { roomCode, story: normalizedStory },
+          { roomCode, story: canonicalStory },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
 
