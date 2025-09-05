@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../components/UI/Toast";
 import axios from "axios";
+import { connectSocket, joinRoom, getSocket } from "../../utils/socket";
 
 const GameRoom = () => {
   const navigate = useNavigate();
@@ -18,19 +19,15 @@ const GameRoom = () => {
 
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-  const [players] = useState(storedPlayers);
-  const [currentTurnIndex, setCurrentTurnIndex] = useState(() => {
-    const tossWinner = sessionStorage.getItem("tossWinner");
-    return tossWinner
-      ? players.findIndex((p) => p.username === tossWinner)
-      : 0;
-  });
+  const [players, setPlayers] = useState(storedPlayers);
+  const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
   const [currentRound, setCurrentRound] = useState(1);
   const [story, setStory] = useState([]); // [{player, text}]
   const [timeLeft, setTimeLeft] = useState(storedTurnTime * 60);
   const [storyInput, setStoryInput] = useState("");
   const timerRef = useRef(null);
   const { error } = useToast();
+  const isHost = sessionStorage.getItem("isHost") === "1";
 
   // 🔑 Helper to map ID → username/chosen name
   const getPlayerName = (playerId) => {
@@ -48,55 +45,103 @@ const GameRoom = () => {
   };
 
   useEffect(() => {
-    updateTurnDisplay();
-    startTimer();
-    return () => clearInterval(timerRef.current);
+    // Initial fetch to sync with server state (story, currentTurnIndex)
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/game/by-room/${roomCode}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      .then((res) => {
+        const g = res.data;
+        if (g?.players?.length) {
+          const normalizedPlayers = g.players.map((p) => ({ _id: p._id, username: p.username }));
+          const hasAI = normalizedPlayers.some((p) => p.username === "AI_Buddy");
+          setPlayers(hasAI ? normalizedPlayers : [...normalizedPlayers, { _id: "AI", username: "AI_Buddy" }]);
+        }
+        if (Array.isArray(g?.story)) {
+          setStory(g.story.map((s) => ({ player: s.player, text: s.text })));
+        }
+        if (typeof g?.currentTurnIndex === "number") {
+          setCurrentTurnIndex(g.currentTurnIndex);
+        }
+        // Derive round from story length
+        const roundsSoFar = Math.max(1, Math.floor((g?.story?.length || 0) / Math.max(1, (g?.players?.length || players.length || 1))) + 1);
+        setCurrentRound(roundsSoFar);
+      })
+      .catch(() => {});
+
+    // Socket setup
+    const socket = connectSocket(() => {
+      const playerName = JSON.parse(sessionStorage.getItem("user") || "{}").username;
+      joinRoom(roomCode, playerName);
+    });
+
+    // Turn started by server (sync timer and index)
+    socket.on("turnStarted", ({ currentTurnIndex: srvIndex, duration }) => {
+      if (typeof srvIndex === "number") setCurrentTurnIndex(srvIndex);
+      if (duration) startTimer(Math.floor(duration / 1000));
+    });
+
+    // Turn added (broadcast when any player submits)
+    socket.on("turnAdded", ({ turn, nextTurnIndex }) => {
+      try {
+        if (turn) {
+          const playerIdOrName = turn.user?._id || turn.user || "Player";
+          const playerName = getPlayerName(playerIdOrName);
+          const text = turn.content || turn.text || "";
+          setStory((prev) => [...prev, { player: playerName, text }]);
+        }
+        if (typeof nextTurnIndex === "number") {
+          const wrapped = nextTurnIndex === 0;
+          setCurrentTurnIndex(nextTurnIndex);
+          if (wrapped) {
+            setCurrentRound((r) => r + 1);
+          }
+        }
+      } catch (e) {
+        console.error("Error handling turnAdded:", e);
+      }
+    });
+
+    socket.on("turnSkipped", ({ skippedTurn, nextTurnIndex }) => {
+      const playerIdOrName = skippedTurn?.user || "Player";
+      const playerName = getPlayerName(playerIdOrName);
+      setStory((prev) => [...prev, { player: playerName, text: skippedTurn?.content || "[SKIPPED - timeout]" }]);
+      if (typeof nextTurnIndex === "number") {
+        const wrapped = nextTurnIndex === 0;
+        setCurrentTurnIndex(nextTurnIndex);
+        if (wrapped) setCurrentRound((r) => r + 1);
+      }
+    });
+
+    socket.on("gameEnded", () => {
+      finalizeAndNavigate();
+    });
+
+    return () => {
+      clearInterval(timerRef.current);
+      socket.off("turnStarted");
+      socket.off("turnAdded");
+      socket.off("turnSkipped");
+      socket.off("gameEnded");
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTurnIndex, currentRound]);
+  }, []);
 
   const updateTurnDisplay = async () => {
     setStoryInput("");
-    const currentPlayer = players[currentTurnIndex]?.username || "Player";
-
-    if (currentPlayer === "AI_Buddy") {
-      try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/game/turn`,
-          { roomCode, gameId },
-          { headers: { Authorization: `Bearer ${user.token}` } }
-        );
-
-        if (res.data?.story) {
-          setStory(res.data.story);
-        } else {
-          setStory((prev) => [
-            ...prev,
-            { player: "AI_Buddy", text: res.data?.text || "AI had no response." },
-          ]);
-        }
-
-        nextTurn();
-      } catch (err) {
-        console.error(err);
-        setStory((prev) => [
-          ...prev,
-          { player: "AI_Buddy", text: "AI failed to respond, skipping..." },
-        ]);
-        nextTurn();
-      }
-    }
+    // AI is handled server-side via timers; no local action needed here.
   };
 
-  const startTimer = () => {
+  const startTimer = (secondsFromServer) => {
     clearInterval(timerRef.current);
-    setTimeLeft(storedTurnTime * 60);
+    const initial = Number.isFinite(secondsFromServer) ? secondsFromServer : storedTurnTime * 60;
+    setTimeLeft(initial);
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          if (players[currentTurnIndex]?.username !== "AI_Buddy") {
-            nextTurn();
-          }
+          // Timer expiry is handled on server (auto-skip); no local nextTurn.
           return 0;
         }
         return prev - 1;
@@ -118,61 +163,50 @@ const GameRoom = () => {
       return;
     }
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/game/turn`,
-        { roomCode, gameId, text: storyInput.trim() },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-
-      if (res.data?.story) {
-        setStory(res.data.story);
-      } else {
-        setStory((prev) => [
-          ...prev,
-          { player: players[currentTurnIndex]?.username || "Player", text: storyInput.trim() },
-        ]);
+      const socket = getSocket();
+      if (!socket) {
+        error("Connection lost. Please refresh.");
+        return;
       }
-
-      nextTurn();
+      socket.emit("submitTurn", { gameId, userId: user._id, content: storyInput.trim() });
+      setStoryInput("");
     } catch (err) {
       console.error(err);
       error("Failed to submit turn");
     }
   };
 
-  const nextTurn = () => {
-    clearInterval(timerRef.current);
-    let nextRound = currentRound;
-    let nextIndex = (currentTurnIndex + 1) % players.length;
-
-    if (currentTurnIndex === players.length - 1) {
-      nextRound++;
-    }
-
-    if (nextRound > storedMaxRounds) {
-      // ✅ Ensure story is stored with proper player names for judgement
-      const storyWithNames = story.map(entry => ({
-        player: entry.player || "Player",
-        text: entry.text || ""
-      }));
-      
-      sessionStorage.setItem("story", JSON.stringify(storyWithNames));
-      sessionStorage.setItem(
-        "archiveGame",
-        JSON.stringify({
-          gameId,
-          title: gameTitle,
-          genre: gameGenre,
-          story: storyWithNames,
-        })
-      );
-      navigate("/judgement");
-      return;
-    }
-
-    setCurrentRound(nextRound);
-    setCurrentTurnIndex(nextIndex);
+  const finalizeAndNavigate = () => {
+    // Ensure story is stored with proper player names for judgement
+    const storyWithNames = story.map((entry) => ({
+      player: entry.player || "Player",
+      text: entry.text || "",
+    }));
+    sessionStorage.setItem("story", JSON.stringify(storyWithNames));
+    sessionStorage.setItem(
+      "archiveGame",
+      JSON.stringify({
+        gameId,
+        title: gameTitle,
+        genre: gameGenre,
+        story: storyWithNames,
+      })
+    );
+    navigate("/judgement");
   };
+
+  // End the game when max rounds reached (host only)
+  useEffect(() => {
+    if (!players.length) return;
+    if (currentRound > storedMaxRounds) {
+      if (isHost) {
+        const socket = getSocket();
+        socket?.emit("endGame", { roomCode, gameId });
+      }
+      finalizeAndNavigate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRound, players.length, storedMaxRounds]);
 
   return (
     <div className="bg-[#0a0a0a] text-white font-inter min-h-screen flex items-center justify-center">
