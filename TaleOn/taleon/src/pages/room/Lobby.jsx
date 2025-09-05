@@ -58,6 +58,32 @@ const Lobby = () => {
             isHost: p._id === res.data.host._id,
           }))
         );
+
+        // Proactively detect if a game is already active for this room and redirect
+        axios
+          .get(`${import.meta.env.VITE_API_URL}/game/by-room/${code}`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+          })
+          .then((gameRes) => {
+            const g = gameRes.data;
+            if (!g || !g._id) return;
+            sessionStorage.setItem("gameId", g._id);
+            sessionStorage.setItem("gameTitle", g.title || "Untitled Tale");
+            sessionStorage.setItem("gameGenre", g.genre || "custom");
+            // Build players from game payload + ensure chosen names if available
+            const playersFromGame = Array.isArray(g.players)
+              ? g.players.map((pl) => ({ _id: pl._id, username: pl.username }))
+              : [];
+            const hasAI2 = playersFromGame.some((p) => p.username === "AI_Buddy");
+            const finalPlayers = hasAI2
+              ? playersFromGame
+              : [...playersFromGame, { _id: "AI", username: "AI_Buddy" }];
+            sessionStorage.setItem("players", JSON.stringify(finalPlayers));
+            if (!currentIsHost) {
+              navigate("/game-room");
+            }
+          })
+          .catch(() => {});
       })
       .catch((err) => {
         console.error(err);
